@@ -1,0 +1,16 @@
+{
+  "tabWidth": 2,
+  "bracketSpacing": true,
+  "printWidth": 100,
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "none",
+  "jsxBracketSameLine": false,
+  "jsxSingleQuote": false,
+  "importOrder": "css-modules",
+  "importOrderCaseInsensitive": true,
+  "importOrderSeparation": "none",
+  "importOrderCaseInsensitiveSeparation": true,
+  "overwrite": true,
+  "plugins": ["prettier-plugin-tailwindcss"]
+}
