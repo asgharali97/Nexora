@@ -12,14 +12,5 @@ services:
       - "5432:5432"
     volumes:
       - nexora_data:/var/lib/postgresql/data
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    environment:
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-
 volumes:
   nexora_data:
