@@ -50,6 +50,12 @@ const Page = () => {
       password: ''
     });
   }
+  const handleGoogle = () => {
+    signIn('google', {
+      callbackUrl: '/'
+    });
+  };
+
   return (
     <>
       <div className="min-h-screen w-full px-8 py-12">
@@ -78,7 +84,7 @@ const Page = () => {
           <button type="submit" className="px-4">
             Signin
           </button>
-          <button onClick={() => signIn('google')}>Sign in with Google</button>
+          <button onClick={handleGoogle}>Sign in with Google</button>
         </form>
       </div>
     </>
