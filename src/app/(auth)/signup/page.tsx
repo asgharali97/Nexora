@@ -1,6 +1,10 @@
 'use client';
 import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { Label } from '@/src/components/ui/label';
+import { Input } from '@/src/components/ui/input';
+import Image from 'next/image';
+import google from '@/public/google.svg';
 
 const Page = () => {
   const [loading, setLoading] = useState(false);
@@ -58,34 +62,82 @@ const Page = () => {
 
   return (
     <>
-      <div className="min-h-screen w-full px-8 py-12">
-        <form onSubmit={handleSubmit}>
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-          />
-          <input
-            name="name"
-            type="text"
-            placeholder="Name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-          <button type="submit" className="px-4">
-            Signin
-          </button>
-          <button onClick={handleGoogle}>Sign in with Google</button>
-        </form>
+      <div className="h-screen min-h-screen w-full px-8 py-12">
+        <div className="flex h-full w-full items-center justify-center">
+          <div className="flex h-full w-xl flex-col items-center p-2">
+            <h1 className="mb-12 text-4xl font-bold text-[var(--primary)]">Nexora</h1>
+            <div className="mt-8 mb-4 flex h-full w-md flex-col items-center">
+              <h2 className="my-2 text-3xl font-medium text-[var(--primary)]">
+                Singup to create your account
+              </h2>
+              <form onSubmit={handleSubmit} className="mb-4 flex h-full w-full flex-col">
+                <button
+                  onClick={handleGoogle}
+                  className="my-3 flex w-full cursor-pointer items-center rounded-lg border border-neutral-200 px-4 py-3 shadow-s"
+                >
+                  <Image src={google} width={100} height={100} alt="google" className="h-6 w-6" />
+                  <span className="text-md w-full">Continue with Google</span>
+                </button>
+                <div className="my-4 border-[0.1px] border-neutral-200"></div>
+                <div className="mt-2">
+                  <div className="flex flex-col gap-6">
+                    <div className="grid gap-2">
+                      <Label htmlFor="email" className="text-lg">
+                        Name
+                      </Label>
+                      <Input
+                        id="name"
+                        name="name"
+                        type="name"
+                        placeholder="jhon doe"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        className="ring-primary focus:ring-primary rounded-full px-4 py-5"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="email" className="text-lg">
+                        Email
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        name="email"
+                        placeholder="m@example.com"
+                        required
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="ring-primary focus:ring-primary rounded-full px-4 py-5"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="password" className="text-lg">
+                        Password
+                      </Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        name="password"
+                        placeholder="password"
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="ring-primary focus:ring-primary rounded-full px-4 py-5"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="text-md text-popover bg-primary sx-4 shadow-m cursor-pointer rounded-full py-2"
+                    >
+                      Signin
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );

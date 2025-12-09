@@ -21,3 +21,7 @@ export default async function proxy() {
 
   redirect(`/${membership.org.slug}/dashboard`);
 }
+
+export const config = {
+  matcher: ['/dashboard/:path*', '/onboarding'],
+}

@@ -1,28 +1,27 @@
-import Image from 'next/image';
+import AnimatedButton from '@/src/components/AnimatedButton';
 
 export default function Home() {
   return (
     <>
-      <div className="min-h-screen font-sans px-8">
-        <div className="flex flex-col justify-center px-8 py-12">
-          <h1 className="text-center text-5xl leading-14 font-bold tracking-wide">
-            Nexora your one stop slouation for <br /> tracking you products stats
+      <div className="min-h-screen px-8 font-sans">
+        <div className="mt-12 flex flex-col items-center justify-center gap-6 py-12">
+          <h1 className="text-center text-5xl leading-14 font-bold tracking-wide text-neutral-900">
+            What's Next for your product
           </h1>
-          <div className="my-8 flex justify-center gap-4">
-            <button className="rounded-full bg-[var(--primary)] text-[var(--light)]  py-2 px-4 cursor-pointer">
-              Start Now
-            </button>
-            <button className ="rounded-full  px-4 py-2 cursor-pointer shadow-[inset_0.5px_0px_2px_1px_rgba(0,0,0,0.1),inset_0.5px_0px_2px_1px_rgba(0,0,0,0.1)]">get Demo</button>
+          <p className="w-sm text-center text-lg text-neutral-600">
+            Your one stop sloution for anylytics, Nexora helps you take Next clear steps without
+            hassle
+          </p>
+          <div className="flex justify-center gap-4">
+            <AnimatedButton title="Start now free" />
           </div>
         </div>
-        <div className="w-full h-116 border border-neutral-300 flex justify-center items-center bg-[var(--secondery-light)]">
-            <div className="py-2 px-4 bg-neutral-200 text-neutral-500 rounded-xl border border-[var(--light)]">
-              Demo
-            </div>
+        <div className="flex h-116 w-full items-center justify-center border border-neutral-300 bg-[var(--secondery-light)]">
+          <div className="rounded-xl border border-[var(--light)] bg-neutral-200 px-4 py-2 text-neutral-500">
+            Demo
+          </div>
         </div>
-        <div className="h-22">
-
-        </div>
+        <div className="h-22"></div>
       </div>
     </>
   );
