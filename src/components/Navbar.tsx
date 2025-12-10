@@ -1,5 +1,5 @@
-'use client';
 import Link from 'next/link';
+import { user } from '@/src/lib/user'
 
 const Navbar = () => {
   return (
@@ -13,12 +13,20 @@ const Navbar = () => {
             <Link href="/">
               <li className='text-md font-medium text-neutral-600'>How works</li>
             </Link>
+            <Link href="/">
+              <li className='text-md font-medium py-1 px-4 rounded-4xl text-white bg-[var(--primary)]'>logout</li>
+            </Link>
+            {
+              !user && ( <div className="">
             <Link href="/signup">
               <li className='text-md font-medium py-1 px-4 rounded-4xl text-white bg-[var(--primary)]'>Signup</li>
             </Link>
             <Link href="/signin">
               <li className='text-md font-medium py-1 px-4 rounded-4xl text-[var(--primary)] border border-[var(--primary)]'>Singin</li>
             </Link>
+            </div>
+             )
+            }
           </ul>
         </div>
       </div>
