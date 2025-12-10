@@ -1,27 +1,37 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/src/lib/auth';
-import { prisma } from '@/src/lib/prisma';
-import { redirect } from 'next/navigation';
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-export default async function proxy() {
-  const session = await getServerSession(authOptions);
+export default withAuth(
+  function proxy(req) {
+    const token = req.nextauth.token;
+    const path = req.nextUrl.pathname;
 
-  if (!session?.user) {
-    redirect('signup');
+    if (!token) {
+      return NextResponse.redirect(new URL("/signin", req.url));
+    }
+
+    if (path.startsWith("/onboarding")) {
+      return NextResponse.next();
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+    pages: {
+      signIn: "/signin",
+    },
   }
-
-  const membership = await prisma.membership.findFirst({
-    where: { userId: session?.user.id },
-    include: { org: true }
-  });
-
-  if (!membership) {
-    redirect('/onboarding');
-  }
-
-  redirect(`/${membership.org.slug}/dashboard`);
-}
+);
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/onboarding'],
-}
+  matcher: [
+    "/dashboard/:path*",
+    "/onboarding",
+    "/:orgSlug/dashboard/:path*",
+    "/:orgSlug/events/:path*",
+    "/:orgSlug/settings/:path*",
+  ],
+};
