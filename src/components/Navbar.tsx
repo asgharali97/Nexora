@@ -20,6 +20,8 @@ const Navbar = () => {
               !user && ( <div className="">
             <Link href="/signup">
               <li className='text-md font-medium py-1 px-4 rounded-4xl text-white bg-[var(--primary)]'>Signup</li>
+              <div>
+              </div>
             </Link>
             <Link href="/signin">
               <li className='text-md font-medium py-1 px-4 rounded-4xl text-[var(--primary)] border border-[var(--primary)]'>Singin</li>

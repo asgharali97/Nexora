@@ -19,9 +19,12 @@ export async function createOrganization(formData: FormData) {
 
     const name = formData.get("name") as string;
 
-    const validatedData = createOrgSchema.parse({ name });
+    const validatedData = createOrgSchema.safeParse({ name });
 
-    const baseSlug = generateSlug(validatedData.name);
+    if(!validatedData.success) {
+       throw new Error('Please provide valid data')
+    };
+    const baseSlug = generateSlug(validatedData.data.name);
 
     const existingOrgs = await prisma.organization.findMany({
       where: {
@@ -37,7 +40,7 @@ export async function createOrganization(formData: FormData) {
 
     const org = await prisma.organization.create({
       data: {
-        name: validatedData.name,
+        name: validatedData.data.name,
         slug: uniqueSlug,
         ownerId: session.user.id,
         memberships: {

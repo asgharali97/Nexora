@@ -2,7 +2,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { prisma } from '@/src/lib/prisma';
 import { redirect } from 'next/navigation';
-import CreateOrgForm from '@/src/components/OrgForm';
 
 export default async function dashboardRedirect() {
   const session = await getServerSession(authOptions);

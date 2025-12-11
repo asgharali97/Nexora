@@ -8,4 +8,10 @@ export const createOrgSchema = z.object({
     .trim(),
 });
 
+export const addMemberSchema = z.object({
+  email: z.email(),
+  orgId: z.string(),
+  role: z.enum(["MEMBER", "ADMIN","ANALYST"]).default("MEMBER"),
+})
+
 export type CreateOrgInput = z.infer<typeof createOrgSchema>;
