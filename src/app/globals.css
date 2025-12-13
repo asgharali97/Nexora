@@ -29,11 +29,10 @@
     --secondary: oklch(0.7202 0.0929 241.8);
     --secondary-foreground: oklch(15% 0.01 0);
     --secondary-hover: oklch(68% 0.09 220);
-    --secondary-light: oklch(93.934% 0.00975 85.9);
-
+    --secondary-light: oklch(97.335% 0.00275 84.302);
     --accent: oklch(96% 0.01 85);
     --accent-foreground: oklch(15% 0.01 0);
-
+    
     --destructive: oklch(55% 0.22 25);
     --destructive-foreground: oklch(98% 0.01 85);
 

@@ -30,7 +30,7 @@ export default function CreateOrgForm() {
   };
 
   return (
-    <Card className="w-full max-w-md rounded-2xl shadow-m">
+    <Card className="bg-secondery-light w-full max-w-md rounded-2xl shadow-s">
       <CardHeader className="w-full flex justify-center flex-col items-center">
         <CardTitle className="text-2xl text-foreground font-medium">Create Your Organization</CardTitle>
         <CardDescription className="text-md">
