@@ -3,7 +3,7 @@ import { user } from '@/src/lib/user';
 import { prisma } from '@/src/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { Role } from '@/generated/prisma/enums';
-import { addMemberSchema } from '@/src/lib/validations/org.schema';
+import { addMemberSchema, type addMemberInput } from '@/src/lib/validations/org.schema';
 
 export async function checkPermision(orgId: string, requiredRole: Role[]) {
   const session = await user();
@@ -27,21 +27,13 @@ export async function checkPermision(orgId: string, requiredRole: Role[]) {
   return { userId: session.user.id, role: membership.role };
 }
 
-export async function addMember(prevState: ActionState | null, formData: FormData) {
-  if (!formData || !(formData instanceof FormData)) {
-      return { error: 'Invalid form submission' };
-  }
-
+export async function addMember(data: addMemberInput) {
   try{
-  const orgId = formData.get('orgId') as string;
-  const role = (formData.get('role') as Role) || 'MEMBER';
-  const email = formData.get('email') as string;
-
-  const validatedData = addMemberSchema.safeParse({ orgId, email, role });
-
+  const validatedData = addMemberSchema.safeParse(data);
   if (!validatedData.success) {
     return { error: 'Please provide valid data' };
   }
+  const { orgId, role, email } = validatedData.data;
     await checkPermision(orgId, ['OWNER', 'ADMIN']);
     const userToAdd = await prisma.user.findUnique({
       where: {

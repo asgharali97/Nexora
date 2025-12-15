@@ -14,4 +14,6 @@ export const addMemberSchema = z.object({
   role: z.enum(["MEMBER", "ADMIN","ANALYST"]).default("MEMBER"),
 })
 
+export type addMemberInput = z.infer<typeof addMemberSchema>;
+
 export type CreateOrgInput = z.infer<typeof createOrgSchema>;

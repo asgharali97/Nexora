@@ -1,27 +1,54 @@
 'use client';
-import React, { useActionState, useState } from 'react';
-import { addMember } from '../app/actions/members';
-import { useFormStatus } from 'react-dom';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { addMember } from '@/src/app/actions/members';
+import { addMemberSchema, type addMemberInput } from '@/src/lib/validations/org.schema';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/src/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { toast } from 'sonner';
 
 const AddMembers = ({ orgId }: { orgId: string }) => {
-  const [state, formAction] = useActionState(addMember, { error: null, success: false });
-  const [role, setRole] = useState('MEMBER');
+  const [isLoading, setIsLoading] = useState(false);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    reset
+  } = useForm<addMemberInput>({
+    resolver: zodResolver(addMemberSchema),
+    defaultValues: {
+      orgId,
+      role: 'MEMBER'
+    }
+  });
+  const role = watch('role')
+
+  const onSubmit = async (data: addMemberInput) => {
+      setIsLoading(true)
+      try {
+        const result = await addMember(data)
+        if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success('Member added successfully!');
+        reset({ orgId, role: 'MEMBER' }); 
+      }
+    } catch (error) {
+      toast.error('Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  }
   return (
     <div className="bg-secondary-light shadow-s w-md rounded-xl border border-neutral-200 px-6 py-4">
       <h1 className="text-center text-xl font-medium">Add Team Members</h1>
-      <form action={formAction} className="my-2 space-y-4">
-        <input type="hidden" name="orgId" value={orgId} />
-        <input type="hidden" name="role" value={role} />
+      <form onSubmit={handleSubmit(onSubmit)} className="my-2 space-y-4">
+        <input type="hidden" {...register("orgId")}/>
         
         <div className="flex flex-col gap-6">
           <div className="grid gap-2">
@@ -30,19 +57,21 @@ const AddMembers = ({ orgId }: { orgId: string }) => {
             </Label>
             <Input
               id="email"
-              name="email"
               type="email"
               placeholder="m@example.com"
-              required
               className="ring-primary focus:ring-primary bg-background rounded-full px-4 py-5"
+              {...register('email')}
             />
+            {errors.email && (
+              <p className="text-sm text-red-400">{errors.email.message}</p>
+            )}
           </div>
           
           <div className="grid gap-2">
             <Label htmlFor="role" className="text-lg">
               Role
             </Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={(value) => setValue('role', value as 'MEMBER' | 'ADMIN')}>
               <SelectTrigger className="bg-background w-full rounded-full px-4 py-5">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
@@ -51,14 +80,19 @@ const AddMembers = ({ orgId }: { orgId: string }) => {
                 <SelectItem value="ADMIN">Admin</SelectItem>
               </SelectContent>
             </Select>
+            {errors.role && (
+              <p className="text-sm text-red-400">{errors.role.message}</p>
+            )}
           </div>
-          
-          {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
-          {state?.success && <p className="text-sm text-success">Member added successfully!</p>}
         </div>
-        
         <div className="flex w-full items-center justify-center">
-          <SubmitButton />
+          <button
+           type="submit"
+           disabled={isLoading}
+           className="px-4 py-2 bg-primary text-popover rounded-full disabled:opacity-50 cursor-pointer"
+          >
+            {isLoading ? 'Adding...' : 'Add Member'}
+          </button>
         </div>
       </form>
     </div>
@@ -66,17 +100,3 @@ const AddMembers = ({ orgId }: { orgId: string }) => {
 };
 
 export default AddMembers;
-
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="px-4 py-2 bg-primary text-popover rounded-full disabled:opacity-50 cursor-pointer"
-    >
-      {pending ? 'Adding...' : 'Add Member'}
-    </button>
-  );
-}
