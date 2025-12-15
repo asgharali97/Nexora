@@ -48,7 +48,7 @@ const MembersPage = async ({ params }: { params: { orgSlug: string } }) => {
             <AddMembers orgId={org.id}/>
           </div>
         )}
-
+        
         <MembersList
           members={org.memberships}
           currentUserRole={currentUserMembership.role}

@@ -77,7 +77,7 @@ export async function addMember(data: addMemberInput) {
   }
 }
 
-export async function remvoeMember(formData: FormData) {
+export async function removeMember(formData: FormData) {
   
   const membershipId = formData.get('membershipId') as string;
   const orgId = formData.get('orgId') as string;
