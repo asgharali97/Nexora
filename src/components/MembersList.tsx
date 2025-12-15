@@ -1,7 +1,6 @@
 'use client';
 import { removeMember, updateMember } from '@/src/app/actions/members';
 import { Role } from '@/generated/prisma/enums';
-import { Membership } from '@/generated/prisma/client';
 import { toast } from 'sonner';
 import {
   Table,
@@ -18,7 +17,7 @@ export default function MembersList({
   currentUserRole,
   orgId
 }: {
-  members: Membership[];
+  members: [];
   currentUserRole: Role;
   orgId: string;
 }) {
@@ -79,8 +78,7 @@ export default function MembersList({
                     {canChangeRoles && member.role !== 'OWNER' ? (
                       <Select
                         value={member.role}
-                        onValueChange={(e) =>
-                          handleRoleChange(member.id, e.currentTarget.value as Role)
+                        onValueChange={(value: string) => handleRoleChange(member.id, value as Role)
                         }
                       >
                         <SelectTrigger className="bg-background w-auto rounded-full px-4 cursor-pointer">

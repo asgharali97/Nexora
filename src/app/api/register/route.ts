@@ -1,7 +1,7 @@
 import { prisma } from '@/src/lib/prisma';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import userSchema from '@/src/lib/validations/user.schema';
+import { userSchema } from '@/src/lib/validations/user.schema';
 
 export async function POST(req: Request) {
   const result = userSchema.safeParse(await req.json());
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   });
 
   if (existing) {
-    return NextResponse.json({ error: 'Email already exists' }, { status: 400 });
+    return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
   }
   const hashed = await bcrypt.hash(password, 12);
 

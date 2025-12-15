@@ -1,31 +1,42 @@
 'use client';
-import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import google from '@/public/google.svg';
 import Image from 'next/image';
 import { Label } from '@/src/components/ui/label';
 import { Input } from '@/src/components/ui/input';
+import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { loginUserInput, loginUserSchema } from '../lib/validations/user.schema';
+import { zodResolver } from '@hookform/resolvers/zod';
 const Signin = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: ''
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset
+  } = useForm<loginUserInput>({
+    resolver: zodResolver(loginUserSchema)
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await signIn('credentials', {
-      email: formData.email,
-      password: formData.password,
-      callbackUrl: '/'
+  const handleSingup = async (data: loginUserInput) => {
+    const res = await signIn('credentials', {
+      email: data.email,
+      password: data.password,
+      callbackUrl: '/',
+      redirect: false
     });
+    if (res?.error) {
+      toast(`${res.error}`);
+    }
+    if (res?.status === 500) {
+      toast('Something went wrong!');
+      return;
+    }
+    if (res?.ok) {
+      toast('Signin successfuly');
+      return;
+    }
+    reset();
   };
   const handleGoogle = () => {
     signIn('google', {
@@ -35,25 +46,28 @@ const Signin = () => {
   return (
     <>
       <div className="flex h-full w-xl flex-col items-center p-2">
-        <h1 className="mb-12 text-4xl font-bold text-[var(--primary)]">Nexora</h1>
+        <h1 className="text-primary mb-12 text-4xl font-bold">Nexora</h1>
         <div className="mt-8 mb-4 flex h-full w-md flex-col items-center">
-          <h2 className="my-2 text-3xl font-medium text-[var(--primary)]">
-            Signin to your account
-          </h2>
-          <form onSubmit={handleSubmit} className="flex h-full w-full flex-col">
+          <h2 className="text-primary my-2 text-3xl font-medium">Signin to your account</h2>
+          <form onSubmit={handleSubmit(handleSingup)} className="flex h-full w-full flex-col">
             <button
               type="button"
               onClick={handleGoogle}
-              className="my-3 flex w-full cursor-pointer items-center rounded-lg shadow-s px-1 py-1"
+              className="shadow-s my-3 flex w-full cursor-pointer items-center rounded-lg px-1 py-1"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white">
                 <Image src={google} width={100} height={100} alt="google" className="h-6 w-6" />
               </div>
-              <span className="text-md w-full text-center">
-                Continure with Google
-              </span>
+              <span className="text-md w-full text-center">Continure with Google</span>
             </button>
-            <div className="my-4 border-[0.1px] border-neutral-200"></div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card text-muted-foreground px-2">Or continue with</span>
+              </div>
+            </div>
             <div className="mt-2">
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
@@ -62,14 +76,13 @@ const Signin = () => {
                   </Label>
                   <Input
                     id="email"
-                    name="email"
                     type="email"
                     placeholder="m@example.com"
                     required
-                    value={formData.email}
-                    onChange={handleChange}
+                    {...register('email')}
                     className="ring-primary focus:ring-primary rounded-full px-4 py-5"
                   />
+                  {errors.email && <p className="text-sm text-red-400">{errors.email.message}</p>}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="password" className="text-lg">
@@ -77,20 +90,21 @@ const Signin = () => {
                   </Label>
                   <Input
                     id="password"
-                    name="password"
                     type="password"
                     placeholder="password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
+                    {...register('password')}
                     className="ring-primary focus:ring-primary rounded-full px-4 py-5"
                   />
+                  {errors.password && (
+                    <p className="text-sm text-red-400">{errors.password.message}</p>
+                  )}
                 </div>
                 <button
                   type="submit"
-                  className="text-md text-popover bg-primary sx-4 rounded-full py-2 shadow-m cursor-pointer"
+                  disabled={isSubmitting}
+                  className="focus-visible:ring-ring hover:bg-primary/90 group bg-primary text-primary-foreground ring-primary before:from-primary-foreground/20 after:from-primary-foreground/10 after:bg-gradient-linear-b relative isolate inline-flex h-9 w-full items-center justify-center overflow-hidden rounded-full px-3 py-2 text-left text-sm font-medium whitespace-nowrap shadow ring-1 transition duration-300 ease-[cubic-bezier(0.4,0.36,0,1)] before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-md before:bg-linear-to-b before:opacity-80 before:transition-opacity before:duration-300 before:ease-[cubic-bezier(0.4,0.36,0,1)] after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:rounded-md after:to-transparent after:mix-blend-overlay focus:outline-none focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  Signin
+                  {isSubmitting ? 'Signing...' : 'Signin'}
                 </button>
               </div>
             </div>
