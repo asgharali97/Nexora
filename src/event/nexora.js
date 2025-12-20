@@ -56,20 +56,37 @@ function getDeveice() {
     }
 
     function initializeSession() {
-        sessionId = getCookie('_nexora_ses');
+        sessionId = getCookie('nexora_ses');
+        const lastActivityTime = getCooki('nexora_last_activity');
 
-        if (!sessionId) {
-            sessionId = generateId();
-            setCookie('_nexora_ses', sessionId, 730)
+        const now = new Date()
+        const SESSION_TIMEOUT = 30 * 60 * 1000;
+
+
+        if (sessionId && lastActivityTime) {
+            const timeSinceActivity = now - parseInt(lastActivityTime);
+
+            if (timeSinceActivity < SESSION_TIMEOUT) {
+                setCookie('nexora_last_activity', now.toString(), 1);
+                return sessionId;
+            }
         }
+
+        sessionId = generateId();
+        setCookie('nexora_ses', sessionId, 1);
+        setCookie('nexora_last_activity', now.toString(), 1);
+
+        track('session_start');
 
         return sessionId;
     }
 
     function track(eventName, eventData) {
         if (!config.apiKey) {
-            throw new Error('nexora not initilized')
+            throw new Error('nexora not initilized');
         };
+
+        setCookie('nexora_last_activity', Date.now().toString(), 1);
 
         const pageUrl = window.location.href;
         const pageTitle = document.title;
@@ -139,6 +156,8 @@ function getDeveice() {
 
             initializeVisitor();
             initializeSession();
+
+            setupAutoTracking()
         },
         track: function (eventName, eventData) { track(eventName, eventData) }
     };
