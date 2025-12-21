@@ -132,22 +132,43 @@ model ApiKey {
   @@map("api_keys")
 }
 
+enum Device {
+  mobile
+  desktop
+  tablet
+}
 
 model Event {
   id         String   @id @default(cuid())
+  projectId  String
   eventName  String
-  properties Json?    @db.JsonB
-  userId     String?
-  orgId      String
+  eventData  Json? @db.JsonB
+
+  visitorsId String @unique
+  sessionId String @unique
+  
+  pageUrl String
+  pageTitle String
+  refferrer String
+
+  browser String
+  os String
+  device Device
+  userAgent String?
+
+  ipAddress Int?
+  city String?
+  country String? 
+
   timestamp  DateTime @default(now())
   deleted    Boolean  @default(false)
   deletedAt  DateTime?
 
-  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org Organization @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([orgId, timestamp(sort: Desc)])
-  @@index([orgId, eventName])
-  @@index([orgId, deleted])
+  @@index([projectId, timestamp(sort: Desc)])
+  @@index([projectId, eventName])
+  @@index([projectId, deleted])
   @@map("events")
 }
 

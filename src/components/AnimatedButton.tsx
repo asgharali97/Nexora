@@ -32,18 +32,18 @@ const AnimatedButton = ({ title }: { title: string;}) => {
     }
   };
   const chevronVariants = {
-    initial: { opacity: 1, filter: 'blur(10px)' },
+    initial: { opacity: 1, filter: 'blur(5px)' },
     animate: {
       filter: 'blur(0px)'
     },
     hover: {
       opacity: 0,
       x: -10,
-      transition: { duration: 0.3, delay: '0.3', ease: 'easeOut' }
+      transition: { duration: 0.1, ease: 'easeInOut' }
     }
   };
   const arrowVariants = {
-    initial: { opacity: 0, filter: 'blur(5px)' },
+    initial: { opacity: 0, filter: 'blur(2px)' },
     hover: {
       opacity: 1,
       filter: 'blur(0px)',
@@ -72,7 +72,7 @@ const AnimatedButton = ({ title }: { title: string;}) => {
           variants={buttonVaritent}
           initial="initial"
           animate="animate"
-          transition="trasition"
+          transition="transition"
           whileHover="hover"
           className="text-foreground shadow-s relative flex w-48 cursor-pointer gap-2 rounded-full border border-neutral-200 text-lg font-medium"
         >
