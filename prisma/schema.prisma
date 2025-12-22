@@ -156,7 +156,7 @@ model Event {
   device Device
   userAgent String?
 
-  ipAddress Int?
+  ipAddress String?
   city String?
   country String? 
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/src/lib/prisma'; 
-import UAParser from 'ua-parser-js';
-
+import { prisma } from '@/src/lib/prisma';
+import {Event} from "@/generated/prisma/client";
+import { UAParser } from 'ua-parser-js';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -9,15 +9,16 @@ export async function OPTIONS(request: NextRequest) {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
   });
 }
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('req come')
     const body = await request.json();
-    
+    console.log(body)
     const {
       apiKey,
       eventName,
@@ -29,13 +30,13 @@ export async function POST(request: NextRequest) {
       referrer,
       userAgent,
       device,
-      timestamp,
+      timestamp
     } = body;
-
-    if (!apiKey) {
+    console.log(body)
+      if (!apiKey) {
       return NextResponse.json(
         { error: 'API key is required' },
-        { 
+        {
           status: 401,
           headers: { 'Access-Control-Allow-Origin': '*' }
         }
@@ -45,14 +46,14 @@ export async function POST(request: NextRequest) {
     const apiKeyRecord = await prisma.apiKey.findUnique({
       where: { key: apiKey },
       include: {
-        org: true,
-      },
+        org: true
+      }
     });
 
     if (!apiKeyRecord) {
       return NextResponse.json(
         { error: 'Invalid API key' },
-        { 
+        {
           status: 401,
           headers: { 'Access-Control-Allow-Origin': '*' }
         }
@@ -62,18 +63,20 @@ export async function POST(request: NextRequest) {
     if (!apiKeyRecord.isActive) {
       return NextResponse.json(
         { error: 'API key is disabled' },
-        { 
+        {
           status: 403,
           headers: { 'Access-Control-Allow-Origin': '*' }
         }
       );
     }
 
-    prisma.apiKey.update({
-      where: { id: apiKeyRecord.id },
-      data: { lastUsed: new Date() },
-    }).catch(err => console.error('Failed to update lastUsed:', err));
-
+    prisma.apiKey
+      .update({
+        where: { id: apiKeyRecord.id },
+        data: { lastUsed: new Date() }
+      })
+      .catch((err) => console.error('Failed to update lastUsed:', err));
+      console.log("got apikey", apiKeyRecord)
     let browser = 'Unknown';
     let os = 'Unknown';
 
@@ -82,82 +85,89 @@ export async function POST(request: NextRequest) {
         const parser = new UAParser(userAgent);
         const browserInfo = parser.getBrowser();
         const osInfo = parser.getOS();
-        
+
         browser = browserInfo.name || 'Unknown';
         os = osInfo.name || 'Unknown';
       } catch (err) {
         console.error('Failed to parse user agent:', err);
       }
     }
+      console.log("got user borwer")
 
     const ipAddress =
       request.headers.get('x-forwarded-for')?.split(',')[0] ||
       request.headers.get('x-real-ip') ||
       null;
+    
 
     if (!eventName || !visitorId || !sessionId || !pageUrl) {
       return NextResponse.json(
         { error: 'Missing required fields: eventName, visitorId, sessionId, pageUrl' },
-        { 
+        {
           status: 400,
           headers: { 'Access-Control-Allow-Origin': '*' }
         }
       );
     }
+      console.log("check messing feilds")
 
-    const event = await prisma.event.create({
+    const event:Event = await prisma.event.create({
       data: {
-        projectId: apiKeyRecord.orgId,
-        
+        org:{
+          connect: {
+            id: apiKeyRecord.orgId,
+            
+          }
+        },
+
         eventName: eventName,
-        eventData: eventData, 
-        
+        eventData: eventData,
+
         visitorsId: visitorId,
         sessionId: sessionId,
-        
+
         pageUrl: pageUrl,
         pageTitle: pageTitle || null,
-        referrer: referrer || null,
-        
+        refferrer: referrer || null,
+
         browser: browser,
         os: os,
         device: device || 'unknown',
         userAgent: userAgent || null,
-        
+
         ipAddress: ipAddress,
         city: null,
         country: null,
-        
-        timestamp: timestamp ? new Date(timestamp) : new Date(),
-      },
-    });
 
+        timestamp: timestamp ? new Date(timestamp) : new Date()
+      }
+    });
+      console.log("saved in db")
     return NextResponse.json(
       {
         success: true,
-        eventId: event.id,
+        eventId: event.id
       },
       {
         status: 200,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-        },
+          'Access-Control-Allow-Origin': '*'
+        }
       }
     );
-
   } catch (error) {
     console.error('Event tracking error:', error);
-    
+
     return NextResponse.json(
       {
         error: 'Failed to track event',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: error instanceof Error ? error : 'Unknown error'
       },
       {
         status: 500,
         headers: {
-          'Access-Control-Allow-Origin': '*',
-        },
+          'Access-Control-Allow-Origin': '*'
+        }
       }
     );
   }
