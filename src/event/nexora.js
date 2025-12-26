@@ -1,22 +1,21 @@
 
-// helper funtions
-function getDeveice() {
-    const ua = navigator.userAgent.toLowerCase();
-
-    if (ua.includes('ipad') || ua.includes('tablet')) {
-        return 'tablet';
-    }
-    if (ua.includes('mobile') || ua.includes('android')) {
-        return 'mobile';
-    }
-    return 'desktop';
-}
 
 (function () {
     let config = { apiKey: null, endpoint: '/api/track' };
 
     let visitorId = null;
     let sessionId = null;
+    let sessionStarted = false;
+
+    const SESSION_TIMEOUT = 30 * 60 * 1000;
+
+    function getDevice() {
+        const ua = navigator.userAgent.toLowerCase();
+
+        if (ua.includes('ipad') || ua.includes('tablet')) return 'tablet';
+        if (ua.includes('mobile') || ua.includes('android')) return 'mobile';
+        return 'desktop';
+    }
 
     function generateId() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -56,18 +55,16 @@ function getDeveice() {
     }
 
     function initializeSession() {
-        sessionId = getCookie('nexora_ses');
-        const lastActivityTime = getCooki('nexora_last_activity');
+        const now = Date.now();
+        const storedSessionId = getCookie('nexora_ses');
+        const lastActivityTime = getCookie('nexora_last_activity');
 
-        const now = new Date()
-        const SESSION_TIMEOUT = 30 * 60 * 1000;
+        if (storedSessionId && lastActivityTime) {
+            const timeSinceActivity = now - Number(lastActivityTime);
 
-
-        if (sessionId && lastActivityTime) {
-            const timeSinceActivity = now - parseInt(lastActivityTime);
-
-            if (timeSinceActivity < SESSION_TIMEOUT) {
-                setCookie('nexora_last_activity', now.toString(), 1);
+            if (!Number.isNaN(timeSinceActivity) && timeSinceActivity < SESSION_TIMEOUT) {
+                sessionId = storedSessionId;
+                setCookie('_nexora_last_activity', now.toString(), 1);
                 return sessionId;
             }
         }
@@ -76,14 +73,18 @@ function getDeveice() {
         setCookie('nexora_ses', sessionId, 1);
         setCookie('nexora_last_activity', now.toString(), 1);
 
-        track('session_start');
+        if (!sessionStarted) {
+            sessionStarted = true;
+            track('session_start');
+        }
 
         return sessionId;
     }
 
     function track(eventName, eventData) {
         if (!config.apiKey) {
-            throw new Error('nexora not initilized');
+            console.warn('Nexora not initialized');
+            return;
         };
 
         setCookie('nexora_last_activity', Date.now().toString(), 1);
@@ -92,7 +93,6 @@ function getDeveice() {
         const pageTitle = document.title;
         const reffer = document.referrer
 
-        const device = getDeveice();
         const ua = navigator.userAgent
 
         const date = new Date
@@ -110,8 +110,7 @@ function getDeveice() {
             referrer: reffer,
 
             userAgent: ua,
-            device: device,
-
+            device: getDevice(),
             timestamp: date.toISOString()
         }
         if (navigator.sendBeacon) {
@@ -125,7 +124,8 @@ function getDeveice() {
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                keepalive: true
             })
                 .then((res) => res.json())
                 .then((res) => console.log('Event data sent to server', res))
@@ -150,16 +150,24 @@ function getDeveice() {
         });
     }
 
-    window.nexora = {
-        init: function (apiKey) {
-            config.apiKey = apiKey;
+      window.nexora = {
+    init(apiKey) {
+      if (!apiKey) {
+        console.warn('API key is required');
+        return;
+      }
 
-            initializeVisitor();
-            initializeSession();
+      config.apiKey = apiKey;
 
-            setupAutoTracking()
-        },
-        track: function (eventName, eventData) { track(eventName, eventData) }
-    };
-})()
+      initializeVisitor();
+      initializeSession();
+
+      setupAutoTracking();
+    },
+
+    track(eventName, eventData) {
+      track(eventName, eventData);
+    }
+  };
+    }) ()
 

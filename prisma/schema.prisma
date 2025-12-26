@@ -86,7 +86,6 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   owner       User         @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   memberships Membership[]
   events      Event[]
@@ -119,7 +118,7 @@ model Membership {
 model ApiKey {
   id        String  @id @default(cuid())
   name      String
-  key       String   @unique
+  hashKey       String   @unique
   orgId     String
   lastUsed  DateTime?
   isActive  Boolean  @default(true)
@@ -127,7 +126,7 @@ model ApiKey {
 
   org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  @@index([key])
+  @@index([hashKey])
   @@index([orgId])
   @@map("api_keys")
 }
@@ -140,35 +139,40 @@ enum Device {
 
 model Event {
   id         String   @id @default(cuid())
-  projectId  String
+  orgId      String
   eventName  String
   eventData  Json? @db.JsonB
 
-  visitorsId String @unique
-  sessionId String @unique
+  visitorsId String?
+  sessionId  String?
   
-  pageUrl String
-  pageTitle String
-  refferrer String
+  pageUrl String?
+  pageTitle String?
+  refferrer String?
 
-  browser String
-  os String
-  device Device
+  browser String?
+  os String?
+  device Device @default(desktop)
   userAgent String?
 
   ipAddress String?
   city String?
   country String? 
 
-  timestamp  DateTime @default(now())
+  receivedAt      DateTime @default(now())
+  clientTimestamp DateTime?
+
   deleted    Boolean  @default(false)
   deletedAt  DateTime?
 
-  org Organization @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  @@index([projectId, timestamp(sort: Desc)])
-  @@index([projectId, eventName])
-  @@index([projectId, deleted])
+  @@index([orgId, receivedAt])
+  @@index([orgId, eventName])
+  @@index([orgId, visitorsId])
+  @@index([orgId, sessionId])
+  @@index([visitorsId])
+  @@index([sessionId])
   @@map("events")
 }
 

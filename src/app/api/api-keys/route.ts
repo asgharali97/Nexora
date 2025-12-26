@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
-import crypto from 'crypto';
 import { user } from '@/src/lib/user';
-
-function generateApiKey(): string {
-  const prefix = 'nx'; 
-  const randomBytes = crypto.randomBytes(32).toString('hex');
-  return `${prefix}_${randomBytes}`;
-}
+import { generateApiKey, hashApiKey } from '@/src/lib/crypto';
+import { CreateApiKeySchema } from '@/src/lib/validations/apiKey.schema';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,11 +13,19 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, orgId } = body;
+    const validation = CreateApiKeySchema.safeParse(body);
 
-    if (!name || !orgId) {
-      return NextResponse.json({ error: 'Name and orgId are required' }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid request data',
+          details: validation.error.flatten().fieldErrors
+        },
+        { status: 400 }
+      );
     }
+
+    const { name, orgId } = validation.data;
 
     const member = await prisma.membership.findFirst({
       where: {
@@ -38,19 +41,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const apiKey = generateApiKey();
+    const plainApiKey = generateApiKey();
+    const hashedApiKey = hashApiKey(plainApiKey);
 
     const newKey = await prisma.apiKey.create({
       data: {
         name,
-        key: apiKey,
+        hashKey: hashedApiKey,
         orgId,
         isActive: true
       },
       select: {
         id: true,
         name: true,
-        key: true,
+        hashKey: true,
         orgId: true,
         isActive: true,
         createdAt: true,
@@ -58,7 +62,13 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    return NextResponse.json(newKey, { status: 201 });
+    return NextResponse.json(
+      {
+        ...newKey,
+        key: plainApiKey
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error creating API key:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -101,7 +111,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
-        key: true,
+        hashKey: true,
         isActive: true,
         lastUsed: true,
         createdAt: true
@@ -111,7 +121,14 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    return NextResponse.json(apiKeys);
+    const maskedKeys = apiKeys.map((key) => ({
+      ...key,
+      key: `${key.hashKey.substring(0, 12)}...${key.hashKey.substring(key.hashKey.length - 4)}`,
+      keyHash: undefined,
+    }));
+
+    return NextResponse.json(maskedKeys);
+
   } catch (error) {
     console.error('Error fetching API keys:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
