@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { hashApiKey } from '@/src/lib/crypto';
 import { TrackEventSchema } from '@/src/lib/validations/events.schema';
+import * as realtimeEvents from '@/src/lib/realtimeEvent';
 import UAParser from 'ua-parser-js';
+
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -14,7 +16,7 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Headers': 'Content-Type'
     }
   });
-}
+}; 
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
         },
 
         eventName: data.eventName,
-        eventData: data.eventData || null,
+        eventData: data.eventData,
         visitorsId: data.visitorsId || null,
         sessionId: data.sessionId || null,
         pageUrl: data.pageUrl || null,
@@ -115,6 +117,24 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    realtimeEvents.broadcast(apiKey.orgId, {
+          type: 'new_event',
+          timestamp: new Date().toISOString(),
+          payload: {
+            id: event.id,
+            eventName: event.eventName,
+            pageUrl: event.pageUrl,
+            pageTitle: event.pageTitle,
+            device: event.device,
+            browser: event.browser,
+            os: event.os,
+            visitorsId: event.visitorsId,
+            sessionId: event.sessionId,
+            receivedAt: event.receivedAt,
+            clientTimestamp: event.clientTimestamp,
+          },
+    });
+      
     prisma.apiKey
       .update({
         where: { id: apiKey.id },
