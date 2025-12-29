@@ -148,7 +148,7 @@ model Event {
   
   pageUrl String?
   pageTitle String?
-  refferrer String?
+  referrer String?
 
   browser String?
   os String?

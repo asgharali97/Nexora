@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/src/components/Navbar";
 import Sessionprovider from "../components/SessionProvider";
 import { Toaster } from "@/src/components/ui/sonner"
 import ConditionalNavbar from "../components/ConditionalNavbar";

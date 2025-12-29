@@ -3,8 +3,7 @@ import { prisma } from '@/src/lib/prisma';
 import { hashApiKey } from '@/src/lib/crypto';
 import { TrackEventSchema } from '@/src/lib/validations/events.schema';
 import * as realtimeEvents from '@/src/lib/realtimeEvent';
-import UAParser from 'ua-parser-js';
-
+import { UAParser } from 'ua-parser-js';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -34,6 +33,8 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
+    console.log(data);
+    
     const hashedApiKey = hashApiKey(data.apiKey);
 
     const apiKey = await prisma.apiKey.findUnique({
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     if (!apiKey) {
       return NextResponse.json({ error: 'Invalid or incorrect apiKey' }, { status: 401 });
     }
-
+    console.log(apiKey)
     let browser: string | null = null;
     let os: string | null = null;
 
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       data: {
         org: {
           connect: {
-            id: apiKey.orgId
+            id: apiKey.org.id
           }
         },
 
@@ -117,24 +118,24 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    realtimeEvents.broadcast(apiKey.orgId, {
-          type: 'new_event',
-          timestamp: new Date().toISOString(),
-          payload: {
-            id: event.id,
-            eventName: event.eventName,
-            pageUrl: event.pageUrl,
-            pageTitle: event.pageTitle,
-            device: event.device,
-            browser: event.browser,
-            os: event.os,
-            visitorsId: event.visitorsId,
-            sessionId: event.sessionId,
-            receivedAt: event.receivedAt,
-            clientTimestamp: event.clientTimestamp,
-          },
+    realtimeEvents.broadcast(apiKey.org.id, {
+      type: 'new_event',
+      timestamp: new Date().toISOString(),
+      payload: {
+        id: event.id,
+        eventName: event.eventName,
+        pageUrl: event.pageUrl,
+        pageTitle: event.pageTitle,
+        device: event.device,
+        browser: event.browser,
+        os: event.os,
+        visitorsId: event.visitorsId,
+        sessionId: event.sessionId,
+        receivedAt: event.receivedAt,
+        clientTimestamp: event.clientTimestamp
+      }
     });
-      
+
     prisma.apiKey
       .update({
         where: { id: apiKey.id },

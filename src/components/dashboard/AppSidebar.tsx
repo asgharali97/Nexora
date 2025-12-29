@@ -46,7 +46,7 @@ const navigation = [
       },
       {
         title: 'Events',
-        url: '/analytics/events',
+        url: '/events',
         icon: ActivityIcon
       }
     ]
