@@ -1,43 +1,47 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import {
-  useRealtimeEvents,
+import { 
+  useRealtimeEvents, 
   type NewEventPayload,
-  type StatsUpdatePayload
+  type StatsUpdatePayload,
 } from '@/src/hooks/useRealTime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
+import { Button } from '@/src/components/ui/button';
+import { Switch } from '@/src/components/ui/switch';
+import { Label } from '@/src/components/ui/label';
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from '@/src/components/ui/table';
 
 export default function RealtimeAnalyticsPage() {
   const params = useParams();
-  console.log(params)
-  const orgId  = params.orgSlug as string;
-  console.log(orgId)
+  const orgId = params.orgSlug as string;
 
   const [events, setEvents] = useState<NewEventPayload[]>([]);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const tableRef = useRef<HTMLDivElement>(null);
+
   const [stats, setStats] = useState<StatsUpdatePayload>({
     totalEvents: 0,
     uniqueVisitors: 0,
-    activeSessions: 0
+    activeSessions: 0,
   });
-  console.log('[Events Page] Rendering with orgId:', orgId);
+
   const { isConnected, connectionError, lastMessageAt } = useRealtimeEvents({
     orgId,
     onNewEvent: (event) => {
       setEvents((prev) => [event, ...prev].slice(0, 100));
-
+      
       setStats((prev) => ({
         ...prev,
-        totalEvents: prev.totalEvents
+        totalEvents: prev.totalEvents,
       }));
     },
     onStatsUpdate: (newStats) => {
@@ -48,15 +52,45 @@ export default function RealtimeAnalyticsPage() {
     },
     onDisconnected: () => {
       console.log('Real-time connection lost');
-    }
+    },
   });
-  console.log('stats ', stats)
+
+  useEffect(() => {
+    if (autoScroll && tableRef.current) {
+      tableRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [events, autoScroll]);
+
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
     });
+  };
+
+  const getTimeSinceLastUpdate = () => {
+    if (!lastMessageAt) return null;
+    
+    const seconds = Math.floor((Date.now() - lastMessageAt.getTime()) / 1000);
+    
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    return `${Math.floor(seconds / 3600)}h ago`;
+  };
+
+  const getConnectionStatusColor = () => {
+    if (!isConnected) return 'bg-red-500';
+    if (!lastMessageAt) return 'bg-yellow-500';
+    
+    const seconds = Math.floor((Date.now() - lastMessageAt.getTime()) / 1000);
+    if (seconds > 60) return 'bg-yellow-500';
+    
+    return 'bg-green-500';
+  };
+
+  const clearEvents = () => {
+    setEvents([]);
   };
 
   return (
@@ -64,23 +98,29 @@ export default function RealtimeAnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Real-Time Analytics</h1>
-          <p className="text-muted-foreground">Live event stream for your organization</p>
+          <p className="text-muted-foreground">
+            Live event stream for your organization
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div
-            className={`h-3 w-3 rounded-full ${
-              isConnected ? 'animate-pulse bg-green-500' : 'bg-gray-400'
-            }`}
-          />
-          <span className="text-sm font-medium">
-            {isConnected ? 'Live' : connectionError || 'Connecting...'}
-          </span>
-          {lastMessageAt && (
-            <span className="text-muted-foreground ml-2 text-xs">
-              Last update: {formatTime(lastMessageAt)}
-            </span>
-          )}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div
+              className={`h-3 w-3 rounded-full ${getConnectionStatusColor()} ${
+                isConnected ? 'animate-pulse' : ''
+              }`}
+            />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">
+                {isConnected ? 'Live' : connectionError || 'Connecting...'}
+              </span>
+              {lastMessageAt && (
+                <span className="text-xs text-muted-foreground">
+                  {getTimeSinceLastUpdate()}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -91,7 +131,9 @@ export default function RealtimeAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalEvents.toLocaleString()}</div>
-            <p className="text-muted-foreground text-xs">All-time event count</p>
+            <p className="text-xs text-muted-foreground">
+              All-time event count
+            </p>
           </CardContent>
         </Card>
 
@@ -101,7 +143,9 @@ export default function RealtimeAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.uniqueVisitors.toLocaleString()}</div>
-            <p className="text-muted-foreground text-xs">Individual users tracked</p>
+            <p className="text-xs text-muted-foreground">
+              Individual users tracked
+            </p>
           </CardContent>
         </Card>
 
@@ -111,60 +155,90 @@ export default function RealtimeAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeSessions.toLocaleString()}</div>
-            <p className="text-muted-foreground text-xs">Currently active</p>
+            <p className="text-xs text-muted-foreground">
+              Currently active
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Live Event Stream</CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Showing {events.length} most recent events
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Live Event Stream</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Showing {events.length} most recent events
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="auto-scroll"
+                  checked={autoScroll}
+                  onCheckedChange={setAutoScroll}
+                />
+                <Label htmlFor="auto-scroll" className="text-sm">
+                  Auto-scroll
+                </Label>
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearEvents}
+                disabled={events.length === 0}
+              >
+                Clear Events
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {events.length === 0 ? (
-            <div className="text-muted-foreground flex items-center justify-center py-8">
-              Waiting for events...
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
+              {isConnected ? 'Waiting for events...' : 'Connecting to live stream...'}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Event</TableHead>
-                  <TableHead>Page</TableHead>
-                  <TableHead>Device</TableHead>
-                  <TableHead>Browser</TableHead>
-                  <TableHead>Visitor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {events.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell className="font-mono text-xs">
-                      {formatTime(event.receivedAt)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{event.eventName}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {event.pageTitle || event.pageUrl || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{event.device}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {event.browser || '-'}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {event.visitorsId?.substring(0, 8) || '-'}
-                    </TableCell>
+            <div ref={tableRef} className="max-h-[600px] overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Event</TableHead>
+                    <TableHead>Page</TableHead>
+                    <TableHead>Device</TableHead>
+                    <TableHead>Browser</TableHead>
+                    <TableHead>Visitor</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {events.map((event) => (
+                    <TableRow key={event.id}>
+                      <TableCell className="font-mono text-xs">
+                        {formatTime(event.receivedAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{event.eventName}</Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {event.pageTitle || event.pageUrl || '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{event.device}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {event.browser || '-'}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {event.visitorsId?.substring(0, 8) || '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
