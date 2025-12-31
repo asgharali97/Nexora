@@ -1,10 +1,10 @@
 'use client';
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { 
-  useRealtimeEvents, 
+import {
+  useRealtimeEvents,
   type NewEventPayload,
-  type StatsUpdatePayload 
+  type StatsUpdatePayload
 } from '@/src/hooks/useRealTime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
 import { Badge } from '@/src/components/ui/badge';
@@ -14,29 +14,30 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/src/components/ui/table';
-
 
 export default function RealtimeAnalyticsPage() {
   const params = useParams();
-  const orgId = params.orgId as string;
+  console.log(params)
+  const orgId  = params.orgSlug as string;
+  console.log(orgId)
 
   const [events, setEvents] = useState<NewEventPayload[]>([]);
   const [stats, setStats] = useState<StatsUpdatePayload>({
     totalEvents: 0,
     uniqueVisitors: 0,
-    activeSessions: 0,
+    activeSessions: 0
   });
-
+  console.log('[Events Page] Rendering with orgId:', orgId);
   const { isConnected, connectionError, lastMessageAt } = useRealtimeEvents({
     orgId,
     onNewEvent: (event) => {
       setEvents((prev) => [event, ...prev].slice(0, 100));
-      
+
       setStats((prev) => ({
         ...prev,
-        totalEvents: prev.totalEvents + 1,
+        totalEvents: prev.totalEvents + 1
       }));
     },
     onStatsUpdate: (newStats) => {
@@ -47,14 +48,14 @@ export default function RealtimeAnalyticsPage() {
     },
     onDisconnected: () => {
       console.log('Real-time connection lost');
-    },
+    }
   });
-
+  console.log('stats ', stats)
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -63,22 +64,20 @@ export default function RealtimeAnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Real-Time Analytics</h1>
-          <p className="text-muted-foreground">
-            Live event stream for your organization
-          </p>
+          <p className="text-muted-foreground">Live event stream for your organization</p>
         </div>
 
         <div className="flex items-center gap-2">
           <div
             className={`h-3 w-3 rounded-full ${
-              isConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+              isConnected ? 'animate-pulse bg-green-500' : 'bg-gray-400'
             }`}
           />
           <span className="text-sm font-medium">
             {isConnected ? 'Live' : connectionError || 'Connecting...'}
           </span>
           {lastMessageAt && (
-            <span className="text-xs text-muted-foreground ml-2">
+            <span className="text-muted-foreground ml-2 text-xs">
               Last update: {formatTime(lastMessageAt)}
             </span>
           )}
@@ -92,9 +91,7 @@ export default function RealtimeAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalEvents.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              All-time event count
-            </p>
+            <p className="text-muted-foreground text-xs">All-time event count</p>
           </CardContent>
         </Card>
 
@@ -104,9 +101,7 @@ export default function RealtimeAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.uniqueVisitors.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Individual users tracked
-            </p>
+            <p className="text-muted-foreground text-xs">Individual users tracked</p>
           </CardContent>
         </Card>
 
@@ -116,9 +111,7 @@ export default function RealtimeAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeSessions.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Currently active
-            </p>
+            <p className="text-muted-foreground text-xs">Currently active</p>
           </CardContent>
         </Card>
       </div>
@@ -126,13 +119,13 @@ export default function RealtimeAnalyticsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Live Event Stream</CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Showing {events.length} most recent events
           </p>
         </CardHeader>
         <CardContent>
           {events.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground">
+            <div className="text-muted-foreground flex items-center justify-center py-8">
               Waiting for events...
             </div>
           ) : (
@@ -162,7 +155,7 @@ export default function RealtimeAnalyticsPage() {
                     <TableCell>
                       <Badge variant="outline">{event.device}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-muted-foreground text-sm">
                       {event.browser || '-'}
                     </TableCell>
                     <TableCell className="font-mono text-xs">

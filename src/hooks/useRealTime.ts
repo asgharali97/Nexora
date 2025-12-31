@@ -54,7 +54,7 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions): UseRealtim
     onDisconnected,
     onError
   } = options;
-
+  console.log('[SSE Hook] Hook called with:', { orgId, enabled });
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [lastMessageAt, setLastMessageAt] = useState<Date | null>(null);
@@ -80,76 +80,90 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions): UseRealtim
   }, [onNewEvent, onStatsUpdate, onConnected, onDisconnected, onError]);
 
   useEffect(() => {
-    if (!enabled || !orgId) {
+
+    if (!enabled) {
       return;
     }
+    if (!orgId) {
+      return;
+    }
+    console.log('[SSE Hook] Creating EventSource connection...');
+    const url = `/api/realtime/events?orgId=${encodeURIComponent(orgId)}`;
+    let eventSource: EventSource;
 
-    console.log('[SSE Hook] Connecting to real-time events for org:', orgId);
+    try {
+      eventSource = new EventSource(url);
 
-    const eventSource = new EventSource(`/api/realtime/events?orgId=${encodeURIComponent(orgId)}`);
+      eventSourceRef.current = eventSource;
 
-    eventSourceRef.current = eventSource;
+      eventSource.onopen = (event) => {
+        setIsConnected(true);
+        setConnectionError(null);
+      };
 
-    eventSource.onopen = () => {
-      console.log('[SSE Hook] Connection established');
-      setIsConnected(true);
-      setConnectionError(null);
-    };
+      eventSource.onmessage = (event) => {
 
-    eventSource.onmessage = (event) => {
-      try {
-        const message: SSEMessage = JSON.parse(event.data);
-        setLastMessageAt(new Date());
+        try {
+          const message: SSEMessage = JSON.parse(event.data);
 
-        switch (message.type) {
-          case 'connected':
-            console.log('[SSE Hook] Connected:', message.payload);
-            callbacksRef.current.onConnected?.();
-            break;
+          setLastMessageAt(new Date());
 
-          case 'new_event':
-            if (callbacksRef.current.onNewEvent && message.payload) {
-              callbacksRef.current.onNewEvent(message.payload as NewEventPayload);
-            }
-            break;
+          switch (message.type) {
+            case 'connected':
+              callbacksRef.current.onConnected?.();
+              break;
 
-          case 'stats_update':
-            if (callbacksRef.current.onStatsUpdate && message.payload) {
-              callbacksRef.current.onStatsUpdate(message.payload as StatsUpdatePayload);
-            }
-            break;
+            case 'new_event':
+              if (callbacksRef.current.onNewEvent && message.payload) {
+                callbacksRef.current.onNewEvent(message.payload as NewEventPayload);
+              }
+              break;
 
-          case 'ping':
-            break;
+            case 'stats_update':
+              if (callbacksRef.current.onStatsUpdate && message.payload) {
+                callbacksRef.current.onStatsUpdate(message.payload as StatsUpdatePayload);
+              }
+              break;
 
-          case 'shutdown':
-            console.log('[SSE Hook] Server shutting down');
-            break;
+            case 'ping':
+              break;
 
-          default:
-            console.warn('[SSE Hook] Unknown message type:', message.type);
+            case 'shutdown':
+              break;
+
+            default:
+              console.warn('[SSE Hook] Unknown message type:', message.type);
+          }
+        } catch (error) {
+          console.error('[SSE Hook] Failed to parse message:', error);
         }
-      } catch (error) {
-        console.error('[SSE Hook] Failed to parse message:', error);
-      }
-    };
+      };
 
-    eventSource.onerror = (error) => {
-      console.error('[SSE Hook] Connection error:', error);
-      setIsConnected(false);
-      setConnectionError('Connection lost. Reconnecting...');
-      callbacksRef.current.onDisconnected?.();
-      callbacksRef.current.onError?.(error);
-    };
+      eventSource.onerror = (error) => {
+        console.error('[SSE Hook] Connection error:', error);
+        console.log('[SSE Hook] ReadyState on error:', eventSource.readyState);
+
+        setIsConnected(false);
+        setConnectionError('Connection lost. Reconnecting...');
+        callbacksRef.current.onDisconnected?.();
+        callbacksRef.current.onError?.(error);
+      };
+    } catch (error) {
+      console.error('[SSE Hook] Error creating EventSource:', error);
+    }
 
     return () => {
-      console.log('[SSE Hook] Closing connection');
-      eventSource.close();
-      eventSourceRef.current = null;
+      if (eventSourceRef.current) {
+        console.log(
+          '[SSE Hook] Closing EventSource, readyState:',
+          eventSourceRef.current.readyState
+        );
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
       setIsConnected(false);
     };
   }, [orgId, enabled]);
-
   return {
     isConnected,
     connectionError,
