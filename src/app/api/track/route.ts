@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
 import { hashApiKey } from '@/src/lib/crypto';
 import { TrackEventSchema } from '@/src/lib/validations/events.schema';
-import * as realtimeEvents from '@/src/lib/realtimeEvent';
+import { broadcast } from '@/src/lib/realtimeEvent';
 import { UAParser } from 'ua-parser-js';
+import { calculateOrgStats } from '@/src/lib/statsService';
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
@@ -15,7 +16,7 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Headers': 'Content-Type'
     }
   });
-}; 
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,8 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
-    console.log(data);
-    
+
     const hashedApiKey = hashApiKey(data.apiKey);
 
     const apiKey = await prisma.apiKey.findUnique({
@@ -48,7 +48,6 @@ export async function POST(request: NextRequest) {
     if (!apiKey) {
       return NextResponse.json({ error: 'Invalid or incorrect apiKey' }, { status: 401 });
     }
-    console.log(apiKey)
     let browser: string | null = null;
     let os: string | null = null;
 
@@ -100,7 +99,6 @@ export async function POST(request: NextRequest) {
             id: apiKey.org.id
           }
         },
-
         eventName: data.eventName,
         eventData: data.eventData,
         visitorsId: data.visitorsId || null,
@@ -117,8 +115,8 @@ export async function POST(request: NextRequest) {
         clientTimestamp
       }
     });
-
-    realtimeEvents.broadcast(apiKey.org.id, {
+    console.log('calling boradcasting')
+    broadcast(apiKey.org.id, {
       type: 'new_event',
       timestamp: new Date().toISOString(),
       payload: {
@@ -135,7 +133,14 @@ export async function POST(request: NextRequest) {
         clientTimestamp: event.clientTimestamp
       }
     });
+    console.log('called boradcast');  
 
+    const updatedStats = await calculateOrgStats(apiKey.org.id);
+    broadcast(apiKey.org.id, {
+      type: 'stats_update',
+      timestamp: new Date().toISOString(),
+      payload: updatedStats
+    });
     prisma.apiKey
       .update({
         where: { id: apiKey.id },

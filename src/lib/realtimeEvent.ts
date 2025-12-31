@@ -1,10 +1,8 @@
-
-type ConnectionWriter = WritableStreamDefaultWriter<Uint8Array>;
-type ConnectionEncoder = TextEncoder;
+type SendMessageFn = (message: string) => void;
 
 interface Connection {
-  writer: ConnectionWriter;
-  encoder: ConnectionEncoder;
+  send: SendMessageFn;
+  encoder: TextEncoder;
   connectedAt: Date;
   lastActivity: Date;
   connectionId: string;
@@ -18,11 +16,10 @@ interface SSEMessage {
 
 const connections = new Map<string, Set<Connection>>();
 
-
 export function addConnection(
   orgId: string,
-  writer: ConnectionWriter,
-  encoder: ConnectionEncoder
+  sendFn: SendMessageFn,
+  encoder: TextEncoder
 ): string {
   if (!connections.has(orgId)) {
     connections.set(orgId, new Set());
@@ -31,7 +28,7 @@ export function addConnection(
   const connectionId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   const connection: Connection = {
-    writer,
+    send: sendFn,
     encoder,
     connectedAt: new Date(),
     lastActivity: new Date(),
@@ -40,25 +37,15 @@ export function addConnection(
 
   connections.get(orgId)!.add(connection);
 
-  writer.closed
-    .then(() => {
-      removeConnection(orgId, connectionId);
-    })
-    .catch(() => {
-      removeConnection(orgId, connectionId);
-    });
-
   console.log(`[SSE] Connection added: ${connectionId} for org: ${orgId}`);
   logConnectionStats();
 
   return connectionId;
 }
 
-
 export function removeConnection(orgId: string, connectionId: string): void {
   const orgConnections = connections.get(orgId);
   if (!orgConnections) return;
-
 
   for (const conn of orgConnections) {
     if (conn.connectionId === connectionId) {
@@ -79,7 +66,11 @@ export function removeConnection(orgId: string, connectionId: string): void {
 export function broadcast(orgId: string, message: SSEMessage): void {
   const orgConnections = connections.get(orgId);
 
+  console.log('[SSE] Broadcast called for org:', orgId);
+  console.log('[SSE] Connections for this org:', orgConnections?.size || 0);
+
   if (!orgConnections || orgConnections.size === 0) {
+    console.log(`[SSE] No connections found for org: ${orgId}`);
     return;
   }
 
@@ -90,7 +81,7 @@ export function broadcast(orgId: string, message: SSEMessage): void {
 
   orgConnections.forEach((conn) => {
     try {
-      conn.writer.write(conn.encoder.encode(messageStr));
+      conn.send(messageStr);
       conn.lastActivity = new Date();
       successCount++;
     } catch (error) {
@@ -99,11 +90,9 @@ export function broadcast(orgId: string, message: SSEMessage): void {
     }
   });
 
-  if (failureCount > 0) {
-    console.warn(
-      `[SSE] Broadcast to org ${orgId}: ${successCount} succeeded, ${failureCount} failed`
-    );
-  }
+  console.log(
+    `[SSE] Broadcast complete: ${successCount} succeeded, ${failureCount} failed`
+  );
 }
 
 export function sendKeepAlivePing(): void {
@@ -119,7 +108,7 @@ export function sendKeepAlivePing(): void {
   connections.forEach((orgConnections) => {
     orgConnections.forEach((conn) => {
       try {
-        conn.writer.write(conn.encoder.encode(messageStr));
+        conn.send(messageStr);
         conn.lastActivity = new Date();
         totalSent++;
       } catch (error) {
@@ -147,10 +136,6 @@ export function cleanupStaleConnections(timeoutMs: number = 5 * 60 * 1000): void
     });
 
     toRemove.forEach((conn) => {
-      try {
-        conn.writer.close();
-      } catch {
-      }
       orgConnections.delete(conn);
       cleanedCount++;
       console.log(`[SSE] Cleaned up stale connection: ${conn.connectionId}`);
@@ -194,7 +179,6 @@ function logConnectionStats(): void {
   );
 }
 
-
 export function initializeRealtimeEvents(): void {
   console.log('[SSE] Initializing real-time events module');
 
@@ -209,7 +193,6 @@ export function initializeRealtimeEvents(): void {
   console.log('[SSE] Real-time events module initialized');
 }
 
-
 export function shutdownRealtimeEvents(): void {
   console.log('[SSE] Shutting down real-time events module');
 
@@ -218,14 +201,13 @@ export function shutdownRealtimeEvents(): void {
     timestamp: new Date().toISOString(),
   };
 
+  const messageStr = `data: ${JSON.stringify(shutdownMessage)}\n\n`;
+
   connections.forEach((orgConnections) => {
     orgConnections.forEach((conn) => {
       try {
-        const messageStr = `data: ${JSON.stringify(shutdownMessage)}\n\n`;
-        conn.writer.write(conn.encoder.encode(messageStr));
-        conn.writer.close();
-      } catch {
-      }
+        conn.send(messageStr);
+      } catch {}
     });
   });
 

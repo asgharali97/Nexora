@@ -37,7 +37,7 @@ export default function RealtimeAnalyticsPage() {
 
       setStats((prev) => ({
         ...prev,
-        totalEvents: prev.totalEvents + 1
+        totalEvents: prev.totalEvents
       }));
     },
     onStatsUpdate: (newStats) => {
