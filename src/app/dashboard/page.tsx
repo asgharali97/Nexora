@@ -1,10 +1,9 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/src/lib/auth';
 import { prisma } from '@/src/lib/prisma';
 import { redirect } from 'next/navigation';
+import { user } from '@/src/lib/user';
 
 export default async function dashboardRedirect() {
-  const session = await getServerSession(authOptions);
+  const session = await user();
   if (!session?.user) redirect('/signin');
 
   const membership = await prisma.membership.findFirst({
