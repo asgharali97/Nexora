@@ -7,21 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/ca
 import { Button } from '@/src/components/ui/button';
 import { Badge } from '@/src/components/ui/badge';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
-import {
   ArrowUpIcon,
   ArrowDownIcon,
   TrendingUpIcon,
@@ -30,6 +15,8 @@ import {
   ActivityIcon
 } from 'lucide-react';
 import { RoundedPieChart } from '@/src/components/charts/roundedPieChart';
+import { ClipAreaChart } from '@/src/components/charts/clippedAreaChart';
+import { MonochromeBarChart } from '@/src/components/charts/MonochromeBarChart';
 
 interface DashboardStats {
   totalEvents: { value: number; trend: number };
@@ -146,8 +133,6 @@ export default function DashboardPage() {
           </Button>
         </div>
       </div>
-
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -250,35 +235,23 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Charts Row 1 */}
+      <div className="grid gap-4">
+        <ClipAreaChart
+          title="Events Over Time"
+          description="Last 7 days"
+          data={charts.eventsOverTime}
+          xAxisKey="date"
+          yAxisKey="count"
+          showTrend={true}
+          trendValue={15}
+          trendLabel="vs previous week"
+          color="#3b82f6"
+          height={300}
+          showAnimation={true}
+          showGrid={true}
+        />
+      </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {/* Events Over Time - Line Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Events Over Time</CardTitle>
-            <p className="text-muted-foreground text-sm">Last 7 days</p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={charts.eventsOverTime}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Device Distribution - Pie Chart */}
         <RoundedPieChart
           title="Device Distribution"
           description="Last 7 Days"
@@ -286,41 +259,6 @@ export default function DashboardPage() {
           dataKey="value"
           nameKey="name"
         />
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Top Pages - Bar Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Pages</CardTitle>
-            <p className="text-muted-foreground text-sm">Most visited pages</p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={charts.topPages} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis
-                  dataKey="url"
-                  type="category"
-                  width={150}
-                  tickFormatter={(value) => {
-                    if (value.length > 25) {
-                      return value.substring(0, 25) + '...';
-                    }
-                    return value;
-                  }}
-                />
-                <Tooltip />
-                <Bar dataKey="count" fill="#8b5cf6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Browser Distribution - Bar Chart */}
-
         <RoundedPieChart
           title="Browser Distribution"
           description="Top browsers"
@@ -333,7 +271,19 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Recent Events */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <MonochromeBarChart
+          title="Top Pages"
+          description="Most visited pages"
+          data={charts.topPages}
+          xAxisKey="url"
+          yAxisKey="count"
+          orientation="vertical"
+          height={300}
+          yAxisWidth={150}
+          showTooltip={true}
+        />
+      </div>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">

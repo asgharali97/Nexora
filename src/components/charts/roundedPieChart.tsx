@@ -130,7 +130,7 @@ export function RoundedPieChart({
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className={`[&_.recharts-text]:fill-background mx-auto h-[350px] w-[350px] max-h-[${height}px]`}
+          className={`[&_.recharts-text]:fill-background mx-auto h-[250px] w-[250px] max-h-[${height}px]`}
         >
           <PieChart>
             <ChartTooltip
