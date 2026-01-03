@@ -42,12 +42,12 @@ const navigation = [
       {
         title: 'Analytics',
         url: '/analytics',
-        icon: BarChart3
+        icon: <BarChart3 />
       },
       {
         title: 'Events',
         url: '/events',
-        icon: ActivityIcon
+        icon: <ActivityIcon/>
       }
     ]
   },
@@ -57,17 +57,17 @@ const navigation = [
       {
         title: 'Installation',
         url: '/setup',
-        icon: Code
+        icon: <Code />
       },
       {
         title: 'API Keys',
         url: '/settings/api-keys',
-        icon: Key
+        icon: <Key />
       },
       {
         title: 'Settings',
         url: '/settings',
-        icon: Settings
+        icon: <Settings />
       }
     ]
   }
@@ -140,7 +140,8 @@ export function AppSidebar({
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
                       <Link href={`/${orgSlug}${item.url}`}>
-                        <item.icon className="h-4 w-4"/>
+                        {/* <item.icon className="h-4 w-4"/> */}
+                        {item.icon}
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>

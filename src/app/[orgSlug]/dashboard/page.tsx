@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { RoundedPieChart } from '@/src/components/charts/roundedPieChart';
 import { ClipAreaChart } from '@/src/components/charts/clippedAreaChart';
-import { MonochromeBarChart } from '@/src/components/charts/MonochromeBarChart';
+import { DefaultBarChart } from '@/src/components/charts/DefaultBarChart'
 
 interface DashboardStats {
   totalEvents: { value: number; trend: number };
@@ -125,7 +125,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">Overview of your analytics</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" asChild>
+          <Button className='bg-secondary-light hover:bg-muted/50 text-black shadow-s'>
             <Link href={`/${orgId}/analytics`}>View Analytics</Link>
           </Button>
           <Button asChild>
@@ -246,7 +246,7 @@ export default function DashboardPage() {
           trendValue={15}
           trendLabel="vs previous week"
           color="#3b82f6"
-          height={300}
+          height={200}
           showAnimation={true}
           showGrid={true}
         />
@@ -272,15 +272,13 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <MonochromeBarChart
+        <DefaultBarChart
           title="Top Pages"
           description="Most visited pages"
           data={charts.topPages}
           xAxisKey="url"
           yAxisKey="count"
-          orientation="vertical"
-          height={300}
-          yAxisWidth={150}
+          showPattern={true}
           showTooltip={true}
         />
       </div>
@@ -291,7 +289,7 @@ export default function DashboardPage() {
               <CardTitle>Recent Events</CardTitle>
               <p className="text-muted-foreground text-sm">Latest activity</p>
             </div>
-            <Button variant="outline" size="sm" asChild>
+            <Button className='bg-secondary-light hover:bg-muted/50 text-black shadow-s'>
               <Link href={`/${orgId}/events`}>View All</Link>
             </Button>
           </div>
@@ -301,10 +299,10 @@ export default function DashboardPage() {
             {recentEvents.map((event) => (
               <div
                 key={event.id}
-                className="hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors"
+                className="bg-secondary-light hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors shadow-s"
               >
                 <div className="flex items-center gap-3">
-                  <Badge variant="secondary">{event.eventName}</Badge>
+                  <Badge className='border border-dashed border-border shadow-in bg-transparent text-black'>{event.eventName}</Badge>
                   <div>
                     <p className="text-sm font-medium">
                       {event.pageTitle || event.pageUrl || 'Unknown Page'}
