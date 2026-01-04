@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { RoundedPieChart } from '@/src/components/charts/roundedPieChart';
 import { ClipAreaChart } from '@/src/components/charts/clippedAreaChart';
-import { DefaultBarChart } from '@/src/components/charts/DefaultBarChart'
+import { DefaultBarChart } from '@/src/components/charts/DefaultBarChart';
 
 interface DashboardStats {
   totalEvents: { value: number; trend: number };
@@ -30,6 +30,7 @@ interface ChartData {
   topPages: { url: string; count: number }[];
   deviceDistribution: { name: string; value: number }[];
   browserDistribution: { name: string; count: number }[];
+  topEvents: { name: string; count: number }[];
 }
 
 interface RecentEvent {
@@ -47,7 +48,6 @@ interface DashboardData {
   recentEvents: RecentEvent[];
 }
 
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 
 export default function DashboardPage() {
   const params = useParams();
@@ -125,7 +125,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">Overview of your analytics</p>
         </div>
         <div className="flex gap-2">
-          <Button className='bg-secondary-light hover:bg-muted/50 text-black shadow-s'>
+          <Button className="bg-secondary-light hover:bg-muted/50 shadow-s text-black">
             <Link href={`/${orgId}/analytics`}>View Analytics</Link>
           </Button>
           <Button asChild>
@@ -281,6 +281,15 @@ export default function DashboardPage() {
           showPattern={true}
           showTooltip={true}
         />
+         <DefaultBarChart
+          title="Top Events"
+          description="Most triggered events"
+          data={charts.topEvents}
+          xAxisKey="name"
+          yAxisKey="count"
+          showPattern={true}
+          showTooltip={true}
+        />
       </div>
       <Card>
         <CardHeader>
@@ -289,7 +298,7 @@ export default function DashboardPage() {
               <CardTitle>Recent Events</CardTitle>
               <p className="text-muted-foreground text-sm">Latest activity</p>
             </div>
-            <Button className='bg-secondary-light hover:bg-muted/50 text-black shadow-s'>
+            <Button className="bg-secondary-light hover:bg-muted/50 shadow-s text-black">
               <Link href={`/${orgId}/events`}>View All</Link>
             </Button>
           </div>
@@ -299,10 +308,12 @@ export default function DashboardPage() {
             {recentEvents.map((event) => (
               <div
                 key={event.id}
-                className="bg-secondary-light hover:bg-muted/50 flex items-center justify-between rounded-lg border p-3 transition-colors shadow-s"
+                className="bg-secondary-light hover:bg-muted/50 shadow-s flex items-center justify-between rounded-lg border p-3 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Badge className='border border-dashed border-border shadow-in bg-transparent text-black'>{event.eventName}</Badge>
+                  <Badge className="border-border shadow-in border border-dashed bg-transparent text-black">
+                    {event.eventName}
+                  </Badge>
                   <div>
                     <p className="text-sm font-medium">
                       {event.pageTitle || event.pageUrl || 'Unknown Page'}

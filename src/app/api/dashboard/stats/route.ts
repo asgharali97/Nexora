@@ -4,14 +4,14 @@ import { user } from '@/src/lib/user';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await user()
+    const session = await user();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
     const orgSlug = searchParams.get('orgId');
-    console.log('orgSlug, and Search Parmas ::', orgSlug, searchParams)
+    console.log('orgSlug, and Search Parmas ::', orgSlug, searchParams);
     if (!orgSlug) {
       return new Response('Missing orgId', { status: 400 });
     }
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     const orgId = org?.orgId;
 
     const member = await prisma.membership.findFirst({
-      where: { userId: session.user.id, orgId },
+      where: { userId: session.user.id, orgId }
     });
 
     if (!member) {
@@ -38,7 +38,6 @@ export async function GET(req: NextRequest) {
     const last30Days = new Date(today);
     last30Days.setDate(last30Days.getDate() - 30);
 
-    // Parallel data fetching
     const [
       totalEvents,
       totalEventsYesterday,
@@ -51,72 +50,67 @@ export async function GET(req: NextRequest) {
       topPages,
       deviceDistribution,
       browserDistribution,
-      recentEvents,
+      topEvents,
+      recentEvents
     ] = await Promise.all([
       prisma.event.count({
-        where: { orgId, receivedAt: { gte: today } },
+        where: { orgId, receivedAt: { gte: today } }
       }),
 
       prisma.event.count({
         where: {
           orgId,
-          receivedAt: { gte: yesterday, lt: today },
-        },
+          receivedAt: { gte: yesterday, lt: today }
+        }
       }),
 
-      // Unique visitors today
       prisma.event.groupBy({
         by: ['visitorsId'],
         where: {
           orgId,
           visitorsId: { not: null },
-          receivedAt: { gte: today },
-        },
+          receivedAt: { gte: today }
+        }
       }),
 
-      // Unique visitors yesterday
       prisma.event.groupBy({
         by: ['visitorsId'],
         where: {
           orgId,
           visitorsId: { not: null },
-          receivedAt: { gte: yesterday, lt: today },
-        },
+          receivedAt: { gte: yesterday, lt: today }
+        }
       }),
 
-      // Page views today
       prisma.event.count({
         where: {
           orgId,
           eventName: 'pageview',
-          receivedAt: { gte: today },
-        },
+          receivedAt: { gte: today }
+        }
       }),
 
-      // Page views yesterday
       prisma.event.count({
         where: {
           orgId,
           eventName: 'pageview',
-          receivedAt: { gte: yesterday, lt: today },
-        },
+          receivedAt: { gte: yesterday, lt: today }
+        }
       }),
 
-      // Active sessions (last 30 min)
       prisma.event.groupBy({
         by: ['sessionId'],
         where: {
           orgId,
           sessionId: { not: null },
-          receivedAt: { gte: new Date(Date.now() - 30 * 60 * 1000) },
-        },
+          receivedAt: { gte: new Date(Date.now() - 30 * 60 * 1000) }
+        }
       }),
 
-      // Events over last 7 days (grouped by day) using Prisma + JS aggregation
       prisma.event
         .findMany({
           where: { orgId, receivedAt: { gte: last7Days } },
-          select: { receivedAt: true },
+          select: { receivedAt: true }
         })
         .then((events) => {
           const counts: Record<string, number> = {};
@@ -129,40 +123,47 @@ export async function GET(req: NextRequest) {
             .map((date) => ({ date, count: counts[date] }));
         }),
 
-      // Top 10 pages
       prisma.event.groupBy({
         by: ['pageUrl'],
         where: {
           orgId,
           pageUrl: { not: null },
-          receivedAt: { gte: last7Days },
+          receivedAt: { gte: last7Days }
         },
         _count: { id: true },
         orderBy: { _count: { id: 'desc' } },
-        take: 10,
+        take: 10
       }),
 
-      // Device distribution
       prisma.event.groupBy({
         by: ['device'],
         where: { orgId, receivedAt: { gte: last7Days } },
-        _count: { id: true },
+        _count: { id: true }
       }),
 
-      // Browser distribution
       prisma.event.groupBy({
         by: ['browser'],
         where: {
           orgId,
           browser: { not: null },
-          receivedAt: { gte: last7Days },
+          receivedAt: { gte: last7Days }
         },
         _count: { id: true },
         orderBy: { _count: { id: 'desc' } },
-        take: 5,
+        take: 5
       }),
 
-      // Recent 10 events
+      prisma.event.groupBy({
+        by: ['eventName'],
+        where: {
+          orgId,
+          receivedAt: { gte: last7Days }
+        },
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+        take: 10
+      }),
+
       prisma.event.findMany({
         where: { orgId },
         orderBy: { receivedAt: 'desc' },
@@ -173,9 +174,9 @@ export async function GET(req: NextRequest) {
           pageUrl: true,
           pageTitle: true,
           receivedAt: true,
-          device: true,
-        },
-      }),
+          device: true
+        }
+      })
     ]);
 
     const calculateTrend = (current: number, previous: number) => {
@@ -189,46 +190,48 @@ export async function GET(req: NextRequest) {
     const stats = {
       totalEvents: {
         value: totalEvents,
-        trend: calculateTrend(totalEvents, totalEventsYesterday),
+        trend: calculateTrend(totalEvents, totalEventsYesterday)
       },
       uniqueVisitors: {
         value: uniqueVisitorsCount,
-        trend: calculateTrend(uniqueVisitorsCount, uniqueVisitorsYesterdayCount),
+        trend: calculateTrend(uniqueVisitorsCount, uniqueVisitorsYesterdayCount)
       },
       pageViews: {
         value: pageViews,
-        trend: calculateTrend(pageViews, pageViewsYesterday),
+        trend: calculateTrend(pageViews, pageViewsYesterday)
       },
       activeSessions: {
         value: activeSessions.length,
-        trend: 0,
-      },
+        trend: 0
+      }
     };
 
     const eventsOverTime = (eventsLast7Days as any[]).map((item: any) => ({
       date: new Date(item.date).toLocaleDateString('en-US', {
         month: 'short',
-        day: 'numeric',
+        day: 'numeric'
       }),
-      count: Number(item.count),
+      count: Number(item.count)
     }));
 
-    // Format top pages
     const topPagesFormatted = topPages.map((page) => ({
       url: page.pageUrl || 'Unknown',
-      count: page._count.id,
+      count: page._count.id
     }));
 
-    // Format device distribution
     const deviceDistributionFormatted = deviceDistribution.map((device) => ({
       name: device.device,
-      value: device._count.id,
+      value: device._count.id
     }));
 
-    // Format browser distribution
     const browserDistributionFormatted = browserDistribution.map((browser) => ({
       name: browser.browser || 'Unknown',
-      count: browser._count.id,
+      count: browser._count.id
+    }));
+
+    const topEventsFormatted = topEvents.map((event) => ({
+      name: event.eventName,
+      count: event._count.id
     }));
 
     return NextResponse.json({
@@ -238,15 +241,13 @@ export async function GET(req: NextRequest) {
         topPages: topPagesFormatted,
         deviceDistribution: deviceDistributionFormatted,
         browserDistribution: browserDistributionFormatted,
+        topEvents: topEventsFormatted,
       },
-      recentEvents,
+      recentEvents
     });
   } catch (error) {
     console.error('[Dashboard Stats API] Error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

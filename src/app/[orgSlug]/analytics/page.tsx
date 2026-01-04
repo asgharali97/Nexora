@@ -1,0 +1,622 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'next/navigation';
+import { Download, RefreshCw, Filter, X } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/src/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
+import { Badge } from '@/src/components/ui/badge';
+import { Input } from '@/src/components/ui/input';
+import { Skeleton } from '@/src/components/ui/skeleton';
+import { ClipAreaChart } from '@/src/components/charts/clippedAreaChart';
+import { RoundedPieChart } from '@/src/components/charts/roundedPieChart';
+import { DefaultBarChart } from '@/src/components/charts/DefaultBarChart';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+
+interface AnalyticsFilters {
+  dateRange: string;
+  startDate?: Date;
+  endDate?: Date;
+  eventType: string;
+  device: string;
+  pageUrl: string;
+}
+
+interface MetricCard {
+  label: string;
+  value: string | number;
+  change: number;
+  changeLabel: string;
+}
+
+interface PagePerformance {
+  pageUrl: string;
+  views: number;
+  uniqueVisitors: number;
+  avgTimeOnPage: string;
+  bounceRate: number;
+}
+
+interface EventRow {
+  id: string;
+  timestamp: Date;
+  eventName: string;
+  pageUrl: string;
+  visitorsId: string;
+  sessionId: string;
+  device: string;
+  browser: string;
+}
+
+interface AnalyticsData {
+  metrics: {
+    totalEvents: MetricCard;
+    uniqueVisitors: MetricCard;
+    totalSessions: MetricCard;
+    avgEventsPerSession: MetricCard;
+  };
+  eventsTimeline: Array<{ date: string; events: number }>;
+  pagePerformance: PagePerformance[];
+  deviceBreakdown: Array<{ name: string; value: number; percentage: number }>;
+  browserBreakdown: Array<{ name: string; value: number; percentage: number }>;
+  topEvents: Array<{ name: string; count: number }>;
+  recentEvents: EventRow[];
+  totalPages: number;
+  availableEventTypes: string[];
+  availablePages: string[];
+}
+
+export default function AnalyticsPage() {
+  const params = useParams();
+  const orgSlug = params.orgSlug as string;
+
+  
+  const [filters, setFilters] = useState<AnalyticsFilters>({
+    dateRange: 'last7days',
+    eventType: 'all',
+    device: 'all',
+    pageUrl: ''
+  });
+
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(20);
+
+  const dateRange = useMemo(() => {
+    const end = endOfDay(new Date());
+    let start: Date;
+
+    switch (filters.dateRange) {
+      case 'today':
+        start = startOfDay(new Date());
+        break;
+      case 'yesterday':
+        start = startOfDay(subDays(new Date(), 1));
+        break;
+      case 'last7days':
+        start = startOfDay(subDays(new Date(), 7));
+        break;
+      case 'last30days':
+        start = startOfDay(subDays(new Date(), 30));
+        break;
+      case 'last90days':
+        start = startOfDay(subDays(new Date(), 90));
+        break;
+      default:
+        start = filters.startDate || startOfDay(subDays(new Date(), 7));
+    }
+
+    return { start, end };
+  }, [filters.dateRange, filters.startDate]);
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        startDate: dateRange.start.toISOString(),
+        endDate: dateRange.end.toISOString(),
+        page: currentPage.toString(),
+        pageSize: pageSize.toString()
+      });
+
+      if (filters.eventType !== 'all') {
+        queryParams.append('eventType', filters.eventType);
+      }
+      if (filters.device !== 'all') {
+        queryParams.append('device', filters.device);
+      }
+      if (filters.pageUrl) {
+        queryParams.append('pageUrl', filters.pageUrl);
+      }
+
+      const response = await fetch(`/api/analytics?${queryParams.toString()}`);
+
+      if (!response.ok) throw new Error('Failed to fetch analytics');
+
+      const analyticsData = await response.json();
+      setData(analyticsData);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [filters, currentPage, dateRange]);
+
+  const activeFilters = useMemo(() => {
+    const active = [];
+    if (filters.eventType !== 'all')
+      active.push({ key: 'eventType', label: `Event: ${filters.eventType}` });
+    if (filters.device !== 'all')
+      active.push({ key: 'device', label: `Device: ${filters.device}` });
+    if (filters.pageUrl) active.push({ key: 'pageUrl', label: `Page: ${filters.pageUrl}` });
+    return active;
+  }, [filters]);
+
+  const removeFilter = (key: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: key === 'pageUrl' ? '' : 'all'
+    }));
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      dateRange: 'last7days',
+      eventType: 'all',
+      device: 'all',
+      pageUrl: ''
+    });
+    setCurrentPage(1);
+  };
+
+  const exportToCSV = async () => {
+    try {
+      const queryParams = new URLSearchParams({
+        startDate: dateRange.start.toISOString(),
+        endDate: dateRange.end.toISOString(),
+        export: 'true'
+      });
+
+      if (filters.eventType !== 'all') queryParams.append('eventType', filters.eventType);
+      if (filters.device !== 'all') queryParams.append('device', filters.device);
+      if (filters.pageUrl) queryParams.append('pageUrl', filters.pageUrl);
+
+      const response = await fetch(`/api/analytics/export?${queryParams.toString()}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `analytics-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-6 p-6 md:p-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+          <p className="text-muted-foreground mt-1">
+            Deep dive into your data with advanced filtering and insights
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={fetchAnalytics} variant="outline" size="sm">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date Range</label>
+              <Select
+                value={filters.dateRange}
+                onValueChange={(value) => setFilters({ ...filters, dateRange: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
+                  <SelectItem value="last7days">Last 7 Days</SelectItem>
+                  <SelectItem value="last30days">Last 30 Days</SelectItem>
+                  <SelectItem value="last90days">Last 90 Days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Event Type</label>
+              <Select
+                value={filters.eventType}
+                onValueChange={(value) => setFilters({ ...filters, eventType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Events</SelectItem>
+                  {data?.availableEventTypes.map((event) => (
+                    <SelectItem key={event} value={event}>
+                      {event}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Device</label>
+              <Select
+                value={filters.device}
+                onValueChange={(value) => setFilters({ ...filters, device: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Devices</SelectItem>
+                  <SelectItem value="desktop">Desktop</SelectItem>
+                  <SelectItem value="mobile">Mobile</SelectItem>
+                  <SelectItem value="tablet">Tablet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Page URL</label>
+              <Input
+                placeholder="Search pages..."
+                value={filters.pageUrl}
+                onChange={(e) => setFilters({ ...filters, pageUrl: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {activeFilters.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+              <span className="text-sm font-medium">Active Filters:</span>
+              {activeFilters.map((filter) => (
+                <Badge key={filter.key} variant="secondary" className="gap-1">
+                  {filter.label}
+                  <button
+                    onClick={() => removeFilter(filter.key)}
+                    className="hover:bg-muted ml-1 rounded-full p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+              <Button onClick={resetFilters} variant="ghost" size="sm">
+                Reset All
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {loading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-3">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="mb-2 h-8 w-32" />
+                <Skeleton className="h-4 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {data &&
+            Object.entries(data.metrics).map(([key, metric]) => (
+              <Card key={key}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-muted-foreground text-sm font-medium">
+                    {metric.label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metric.value.toLocaleString()}</div>
+                  <p
+                    className={`mt-1 text-xs ${metric.change >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {metric.change >= 0 ? '↑' : '↓'} {Math.abs(metric.change)}% {metric.changeLabel}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+        </div>
+      )}
+
+      {loading ? (
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Events Over Time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ClipAreaChart
+              title="Events Over Time"
+              description="Last 7 days"
+              data={data?.eventsTimeline || []}
+              xAxisKey="date"
+              yAxisKey="count"
+              showTrend={true}
+              trendValue={15}
+              trendLabel="vs previous week"
+              color="#3b82f6"
+              height={200}
+              showAnimation={true}
+              showGrid={true}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {loading ? (
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[250px] w-full" />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Device Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RoundedPieChart
+                title="deviceBreakdown"
+                data={data?.deviceBreakdown || []}
+                height={250}
+              />
+              <div className="mt-4 space-y-2">
+                {data?.deviceBreakdown.map((item) => (
+                  <div key={item.name} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{item.name}</span>
+                    <span className="font-medium">
+                      {item.value} ({item.percentage}%)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {loading ? (
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[250px] w-full" />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Browser Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RoundedPieChart
+                title="Browser Distribution"
+                description="Top browsers"
+                data={data?.browserBreakdown || []}
+                height={250}
+                dataKey="value"
+                nameKey="name"
+                showTrend={true}
+                trendValue={8}
+                trendLabel="vs last week"
+              />
+              <div className="mt-4 space-y-2">
+                {data?.browserBreakdown.map((item) => (
+                  <div key={item.name} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{item.name}</span>
+                    <span className="font-medium">
+                      {item.value} ({item.percentage}%)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {loading ? (
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[250px] w-full" />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Events</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DefaultBarChart
+              title="Top Events"
+              description="Most triggered events"
+              data={data?.topEvents || []}
+              xAxisKey="name"
+              yAxisKey="count"
+              showPattern={true}
+              showTooltip={true}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? (
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Page Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-3 text-left font-medium">Page URL</th>
+                    <th className="p-3 text-right font-medium">Views</th>
+                    <th className="p-3 text-right font-medium">Unique Visitors</th>
+                    <th className="p-3 text-right font-medium">Avg. Time</th>
+                    <th className="p-3 text-right font-medium">Bounce Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data?.pagePerformance.map((page, index) => (
+                    <tr key={index} className="hover:bg-muted/50 border-b">
+                      <td className="p-3 font-mono text-sm">{page.pageUrl}</td>
+                      <td className="p-3 text-right">{page.views.toLocaleString()}</td>
+                      <td className="p-3 text-right">{page.uniqueVisitors.toLocaleString()}</td>
+                      <td className="p-3 text-right">{page.avgTimeOnPage}</td>
+                      <td className="p-3 text-right">{page.bounceRate}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? (
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-[300px] w-full" />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Events</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-3 text-left font-medium">Timestamp</th>
+                    <th className="p-3 text-left font-medium">Event Name</th>
+                    <th className="p-3 text-left font-medium">Page</th>
+                    <th className="p-3 text-left font-medium">Visitor ID</th>
+                    <th className="p-3 text-left font-medium">Device</th>
+                    <th className="p-3 text-left font-medium">Browser</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data?.recentEvents.map((event) => (
+                    <tr key={event.id} className="hover:bg-muted/50 border-b">
+                      <td className="p-3 text-sm">
+                        {format(new Date(event.timestamp), 'MMM dd, HH:mm:ss')}
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="outline">{event.eventName}</Badge>
+                      </td>
+                      <td className="max-w-xs truncate p-3 font-mono text-sm">{event.pageUrl}</td>
+                      <td className="p-3 font-mono text-xs">{event.visitorsId.slice(0, 8)}</td>
+                      <td className="p-3 text-sm capitalize">{event.device}</td>
+                      <td className="p-3 text-sm">{event.browser}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {data && data.totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between">
+                <p className="text-muted-foreground text-sm">
+                  Page {currentPage} of {data.totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentPage((p) => Math.min(data.totalPages, p + 1))}
+                    disabled={currentPage === data.totalPages}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
