@@ -24,7 +24,7 @@ const LINE_VARIANTS: Variants = {
 const ChartColumnIncreasingIcon = forwardRef<
   ChartColumnIncreasingIconHandle,
   ChartColumnIncreasingIconProps
->(({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
+>(({ onMouseEnter, onMouseLeave, className, size = 16, ...props }, ref) => {
   const controls = useAnimation();
   const isControlledRef = useRef(false);
 

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { BarChart3, Settings, Key, Code, Building2, ChevronRight } from 'lucide-react';
+import { Building2, ChevronRight } from 'lucide-react';
 
 import {
   Sidebar,
@@ -24,8 +24,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/src/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar';
-import { ActivityIcon } from '../ui/activity';
+import { ActivityIcon, ActivityIconHandle } from '@/src/components/ui/activity';
+import { ChartColumnIncreasingIcon, ChartColumnIncreasingIconHandle } from '@/src/components/ui/chart-column-increasing';
+import { ChevronsLeftRightIcon, ChevronsLeftRightIconHandle } from '@/src/components/ui/chevrons-left-right';
+import { KeyIcon, KeyIconHandle } from '@/src/components/ui/key';
+import { SettingsIcon, SettingsIconHandle } from '@/src/components/ui/settings';
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   orgSlug: string;
@@ -42,12 +45,12 @@ const navigation = [
       {
         title: 'Analytics',
         url: '/analytics',
-        icon: <BarChart3 />
+        icon: ChartColumnIncreasingIcon
       },
       {
         title: 'Events',
         url: '/events',
-        icon: <ActivityIcon/>
+        icon: ActivityIcon
       }
     ]
   },
@@ -57,17 +60,17 @@ const navigation = [
       {
         title: 'Installation',
         url: '/setup',
-        icon: <Code />
+        icon: ChevronsLeftRightIcon
       },
       {
         title: 'API Keys',
         url: '/settings/api-keys',
-        icon: <Key />
+        icon: KeyIcon
       },
       {
         title: 'Settings',
         url: '/settings',
-        icon: <Settings />
+        icon: SettingsIcon
       }
     ]
   }
@@ -82,10 +85,24 @@ export function AppSidebar({
   ...props
 }: AppSidebarProps) {
   const pathname = usePathname();
+  const activityIconRef = React.useRef<ActivityIconHandle>(null);
+  const chartIconRef = React.useRef<ChartColumnIncreasingIconHandle>(null);
+  const chevronsIconRef = React.useRef<ChevronsLeftRightIconHandle>(null);
+  const keyIconRef = React.useRef<KeyIconHandle>(null);
+  const settingsIconRef = React.useRef<SettingsIconHandle>(null);
 
   const isActive = (url: string) => {
     const fullPath = `/${orgSlug}${url}`;
     return pathname === fullPath || pathname?.startsWith(fullPath + '/');
+  };
+
+  const getIconRef = (icon: any) => {
+    if (icon === ActivityIcon) return activityIconRef;
+    if (icon === ChartColumnIncreasingIcon) return chartIconRef;
+    if (icon === ChevronsLeftRightIcon) return chevronsIconRef;
+    if (icon === KeyIcon) return keyIconRef;
+    if (icon === SettingsIcon) return settingsIconRef;
+    return null;
   };
 
   return (
@@ -136,17 +153,24 @@ export function AppSidebar({
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                      <Link href={`/${orgSlug}${item.url}`}>
-                        {/* <item.icon className="h-4 w-4"/> */}
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {group.items.map((item) => {
+                  const iconRef = getIconRef(item.icon);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        isActive={isActive(item.url)}
+                        tooltip={item.title}
+                        onMouseEnter={() => iconRef?.current?.startAnimation()}
+                        onMouseLeave={() => iconRef?.current?.stopAnimation()}
+                      >
+                        <Link href={`/${orgSlug}${item.url}`} className="flex items-center gap-2">
+                          <item.icon ref={iconRef} />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
