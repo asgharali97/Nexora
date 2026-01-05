@@ -19,6 +19,14 @@ import { ClipAreaChart } from '@/src/components/charts/clippedAreaChart';
 import { RoundedPieChart } from '@/src/components/charts/roundedPieChart';
 import { DefaultBarChart } from '@/src/components/charts/DefaultBarChart';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell
+} from '@/src/components/ui/table';
 
 interface AnalyticsFilters {
   dateRange: string;
@@ -77,7 +85,6 @@ export default function AnalyticsPage() {
   const params = useParams();
   const orgSlug = params.orgSlug as string;
 
-  
   const [filters, setFilters] = useState<AnalyticsFilters>({
     dateRange: 'last7days',
     eventType: 'all',
@@ -207,9 +214,10 @@ export default function AnalyticsPage() {
       console.error('Error exporting CSV:', error);
     }
   };
+  console.log(data?.eventsTimeline);
 
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
@@ -218,11 +226,19 @@ export default function AnalyticsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={fetchAnalytics} variant="outline" size="sm">
+          <Button
+            onClick={fetchAnalytics}
+            size="sm"
+            className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button onClick={exportToCSV} variant="outline" size="sm">
+          <Button
+            onClick={exportToCSV}
+            size="sm"
+            className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
+          >
             <Download className="mr-2 h-4 w-4" />
             Export CSV
           </Button>
@@ -305,10 +321,13 @@ export default function AnalyticsPage() {
           </div>
 
           {activeFilters.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-4">
               <span className="text-sm font-medium">Active Filters:</span>
               {activeFilters.map((filter) => (
-                <Badge key={filter.key} variant="secondary" className="gap-1">
+                <Badge
+                  key={filter.key}
+                  className="border-border shadow-in gap-1 border border-dashed bg-transparent text-black"
+                >
                   {filter.label}
                   <button
                     onClick={() => removeFilter(filter.key)}
@@ -318,7 +337,11 @@ export default function AnalyticsPage() {
                   </button>
                 </Badge>
               ))}
-              <Button onClick={resetFilters} variant="ghost" size="sm">
+              <Button
+                onClick={resetFilters}
+                size="sm"
+                className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
+              >
                 Reset All
               </Button>
             </div>
@@ -362,40 +385,33 @@ export default function AnalyticsPage() {
             ))}
         </div>
       )}
-
-      {loading ? (
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-40" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-[300px] w-full" />
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Events Over Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ClipAreaChart
-              title="Events Over Time"
-              description="Last 7 days"
-              data={data?.eventsTimeline || []}
-              xAxisKey="date"
-              yAxisKey="count"
-              showTrend={true}
-              trendValue={15}
-              trendLabel="vs previous week"
-              color="#3b82f6"
-              height={200}
-              showAnimation={true}
-              showGrid={true}
-            />
-          </CardContent>
-        </Card>
-      )}
-
+      <div className="grid gap-4">
+        {loading ? (
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[300px] w-full" />
+            </CardContent>
+          </Card>
+        ) : (
+          <ClipAreaChart
+            title="Events Over Time"
+            description="Last 7 days"
+            data={data?.eventsTimeline || []}
+            xAxisKey="date"
+            yAxisKey="count"
+            showTrend={true}
+            trendValue={15}
+            trendLabel="vs previous week"
+            color="#3b82f6"
+            height={200}
+            showAnimation={true}
+            showGrid={true}
+          />
+        )}
+      </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {loading ? (
           <Card>
@@ -482,22 +498,15 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DefaultBarChart
-              title="Top Events"
-              description="Most triggered events"
-              data={data?.topEvents || []}
-              xAxisKey="name"
-              yAxisKey="count"
-              showPattern={true}
-              showTooltip={true}
-            />
-          </CardContent>
-        </Card>
+        <DefaultBarChart
+          title="Top Events"
+          description="Most triggered events"
+          data={data?.topEvents || []}
+          xAxisKey="name"
+          yAxisKey="count"
+          showPattern={true}
+          showTooltip={true}
+        />
       )}
 
       {loading ? (
@@ -516,28 +525,28 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="p-3 text-left font-medium">Page URL</th>
-                    <th className="p-3 text-right font-medium">Views</th>
-                    <th className="p-3 text-right font-medium">Unique Visitors</th>
-                    <th className="p-3 text-right font-medium">Avg. Time</th>
-                    <th className="p-3 text-right font-medium">Bounce Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Page URL</TableHead>
+                    <TableHead>Views</TableHead>
+                    <TableHead>Unique Visitors</TableHead>
+                    <TableHead>Avg. Time</TableHead>
+                    <TableHead>Bounce Rate</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {data?.pagePerformance.map((page, index) => (
-                    <tr key={index} className="hover:bg-muted/50 border-b">
-                      <td className="p-3 font-mono text-sm">{page.pageUrl}</td>
-                      <td className="p-3 text-right">{page.views.toLocaleString()}</td>
-                      <td className="p-3 text-right">{page.uniqueVisitors.toLocaleString()}</td>
-                      <td className="p-3 text-right">{page.avgTimeOnPage}</td>
-                      <td className="p-3 text-right">{page.bounceRate}%</td>
-                    </tr>
+                    <TableRow key={index}>
+                      <TableCell>{page.pageUrl}</TableCell>
+                      <TableCell>{page.views.toLocaleString()}</TableCell>
+                      <TableCell>{page.uniqueVisitors.toLocaleString()}</TableCell>
+                      <TableCell>{page.avgTimeOnPage}</TableCell>
+                      <TableCell>{page.bounceRate}%</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
@@ -559,34 +568,34 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="p-3 text-left font-medium">Timestamp</th>
-                    <th className="p-3 text-left font-medium">Event Name</th>
-                    <th className="p-3 text-left font-medium">Page</th>
-                    <th className="p-3 text-left font-medium">Visitor ID</th>
-                    <th className="p-3 text-left font-medium">Device</th>
-                    <th className="p-3 text-left font-medium">Browser</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Timestamp</TableHead>
+                    <TableHead>Event Name</TableHead>
+                    <TableHead>Page</TableHead>
+                    <TableHead>Visitor ID</TableHead>
+                    <TableHead>Device</TableHead>
+                    <TableHead>Browser</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {data?.recentEvents.map((event) => (
-                    <tr key={event.id} className="hover:bg-muted/50 border-b">
-                      <td className="p-3 text-sm">
-                        {format(new Date(event.timestamp), 'MMM dd, HH:mm:ss')}
-                      </td>
-                      <td className="p-3">
-                        <Badge variant="outline">{event.eventName}</Badge>
-                      </td>
-                      <td className="max-w-xs truncate p-3 font-mono text-sm">{event.pageUrl}</td>
-                      <td className="p-3 font-mono text-xs">{event.visitorsId.slice(0, 8)}</td>
-                      <td className="p-3 text-sm capitalize">{event.device}</td>
-                      <td className="p-3 text-sm">{event.browser}</td>
-                    </tr>
+                    <TableRow key={event.id}>
+                      <TableCell>{format(new Date(event.timestamp), 'MMM dd, HH:mm:ss')}</TableCell>
+                      <TableCell>
+                        <Badge className="border-border shadow-in border border-dashed bg-transparent text-black">
+                          {event.eventName}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{event.pageUrl}</TableCell>
+                      <TableCell>{event.visitorsId ? event.visitorsId.slice(0, 8) : '-'}</TableCell>
+                      <TableCell>{event.device}</TableCell>
+                      <TableCell>{event.browser}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
 
             {data && data.totalPages > 1 && (
@@ -598,16 +607,14 @@ export default function AnalyticsPage() {
                   <Button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
-                    variant="outline"
-                    size="sm"
+                    className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
                   >
                     Previous
                   </Button>
                   <Button
                     onClick={() => setCurrentPage((p) => Math.min(data.totalPages, p + 1))}
                     disabled={currentPage === data.totalPages}
-                    variant="outline"
-                    size="sm"
+                    className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
                   >
                     Next
                   </Button>

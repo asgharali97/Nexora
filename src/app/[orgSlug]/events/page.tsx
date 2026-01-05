@@ -185,8 +185,7 @@ export default function RealtimeAnalyticsPage() {
               </div>
               
               <Button
-                variant="outline"
-                size="sm"
+                className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
                 onClick={clearEvents}
                 disabled={events.length === 0}
               >
@@ -220,13 +219,13 @@ export default function RealtimeAnalyticsPage() {
                         {formatTime(event.receivedAt)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{event.eventName}</Badge>
+                        <Badge  className="border-border shadow-in border border-dashed bg-transparent text-black">{event.eventName}</Badge>
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {event.pageTitle || event.pageUrl || '-'}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{event.device}</Badge>
+                        <Badge  className="border-border shadow-in border border-dashed bg-transparent text-black">{event.device}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {event.browser || '-'}
