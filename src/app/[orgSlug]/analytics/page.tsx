@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Download, RefreshCw, Filter, X } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
@@ -94,6 +94,7 @@ export default function AnalyticsPage() {
 
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
 
@@ -124,42 +125,58 @@ export default function AnalyticsPage() {
     return { start, end };
   }, [filters.dateRange, filters.startDate]);
 
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      const queryParams = new URLSearchParams({
-        startDate: dateRange.start.toISOString(),
-        endDate: dateRange.end.toISOString(),
-        page: currentPage.toString(),
-        pageSize: pageSize.toString()
-      });
+  const fetchAnalytics = useCallback(
+    async (pageUpdate = false) => {
+      try {
+        if (pageUpdate) {
+          setTableLoading(true);
+        } else {
+          setLoading(true);
+        }
 
-      if (filters.eventType !== 'all') {
-        queryParams.append('eventType', filters.eventType);
+        const queryParams = new URLSearchParams({
+          startDate: dateRange.start.toISOString(),
+          endDate: dateRange.end.toISOString(),
+          page: currentPage.toString(),
+          pageSize: pageSize.toString()
+        });
+
+        if (filters.eventType !== 'all') {
+          queryParams.append('eventType', filters.eventType);
+        }
+        if (filters.device !== 'all') {
+          queryParams.append('device', filters.device);
+        }
+        if (filters.pageUrl) {
+          queryParams.append('pageUrl', filters.pageUrl);
+        }
+
+        const response = await fetch(`/api/analytics?${queryParams.toString()}`);
+
+        if (!response.ok) throw new Error('Failed to fetch analytics');
+
+        const analyticsData = await response.json();
+        setData(analyticsData);
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+      } finally {
+        setLoading(false);
+        setTableLoading(false);
       }
-      if (filters.device !== 'all') {
-        queryParams.append('device', filters.device);
-      }
-      if (filters.pageUrl) {
-        queryParams.append('pageUrl', filters.pageUrl);
-      }
-
-      const response = await fetch(`/api/analytics?${queryParams.toString()}`);
-
-      if (!response.ok) throw new Error('Failed to fetch analytics');
-
-      const analyticsData = await response.json();
-      setData(analyticsData);
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [dateRange, currentPage, pageSize, filters]
+  );
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [filters, currentPage, dateRange]);
+    setCurrentPage(1);
+    fetchAnalytics(false);
+  }, [filters, dateRange]);
+
+  useEffect(() => {
+    if (currentPage !== 1 && data) {
+      fetchAnalytics(true);
+    }
+  }, [currentPage]);
 
   const activeFilters = useMemo(() => {
     const active = [];
@@ -192,29 +209,67 @@ export default function AnalyticsPage() {
     try {
       const queryParams = new URLSearchParams({
         startDate: dateRange.start.toISOString(),
-        endDate: dateRange.end.toISOString(),
-        export: 'true'
-      });
+        endDate: dateRange.end.toISOString()
+      });      
 
-      if (filters.eventType !== 'all') queryParams.append('eventType', filters.eventType);
-      if (filters.device !== 'all') queryParams.append('device', filters.device);
-      if (filters.pageUrl) queryParams.append('pageUrl', filters.pageUrl);
+      if (filters.eventType !== 'all') {
+        queryParams.append('eventType', filters.eventType);
+      }
+      if (filters.device !== 'all') {
+        queryParams.append('device', filters.device);
+      }
+      if (filters.pageUrl) {
+        queryParams.append('pageUrl', filters.pageUrl);
+      }
+
+      console.log('Exporting with params:', queryParams.toString());
 
       const response = await fetch(`/api/analytics/export?${queryParams.toString()}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Export failed:', errorText);
+        alert('Export failed. Check console for details.');
+        return;
+      }
+
+      const contentType = response.headers.get('content-type');
+      console.log('Response content-type:', contentType);
+
+      if (!contentType || !contentType.includes('text/csv')) {
+        const text = await response.text();
+        console.error('Expected CSV but got:', text.substring(0, 200));
+        alert('Export failed: Invalid response format');
+        return;
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `analytics-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      a.download = `analytics-${format(new Date(), 'yyyy-MM-dd-HHmmss')}.csv`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+
+      console.log('Export completed successfully');
     } catch (error) {
       console.error('Error exporting CSV:', error);
+      alert('Export failed. Check console for details.');
     }
   };
-  console.log(data?.eventsTimeline);
+
+  const eventsTimelineData = useMemo(() => {
+    if (!data?.eventsTimeline) return [];
+    return data.eventsTimeline.map((item) => ({
+      date: item.date,
+      count: item.events
+    }));
+  }, [data?.eventsTimeline]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -227,7 +282,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={fetchAnalytics}
+            onClick={() => fetchAnalytics(false)}
             size="sm"
             className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
           >
@@ -385,6 +440,7 @@ export default function AnalyticsPage() {
             ))}
         </div>
       )}
+
       <div className="grid gap-4">
         {loading ? (
           <Card>
@@ -399,7 +455,7 @@ export default function AnalyticsPage() {
           <ClipAreaChart
             title="Events Over Time"
             description="Last 7 days"
-            data={data?.eventsTimeline || []}
+            data={eventsTimelineData}
             xAxisKey="date"
             yAxisKey="count"
             showTrend={true}
@@ -412,79 +468,53 @@ export default function AnalyticsPage() {
           />
         )}
       </div>
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {loading ? (
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-40" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[250px] w-full" />
-            </CardContent>
-          </Card>
+          <>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[250px] w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[250px] w-full" />
+              </CardContent>
+            </Card>
+          </>
         ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Device Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <>
+            <div>
               <RoundedPieChart
-                title="deviceBreakdown"
+                title="Device Distribution"
+                description="Traffic by device type"
                 data={data?.deviceBreakdown || []}
-                height={250}
-              />
-              <div className="mt-4 space-y-2">
-                {data?.deviceBreakdown.map((item) => (
-                  <div key={item.name} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{item.name}</span>
-                    <span className="font-medium">
-                      {item.value} ({item.percentage}%)
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {loading ? (
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-40" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-[250px] w-full" />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Browser Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RoundedPieChart
-                title="Browser Distribution"
-                description="Top browsers"
-                data={data?.browserBreakdown || []}
-                height={250}
+                height={300}
                 dataKey="value"
                 nameKey="name"
-                showTrend={true}
-                trendValue={8}
-                trendLabel="vs last week"
+                showTrend={false}
               />
-              <div className="mt-4 space-y-2">
-                {data?.browserBreakdown.map((item) => (
-                  <div key={item.name} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{item.name}</span>
-                    <span className="font-medium">
-                      {item.value} ({item.percentage}%)
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div>
+              <RoundedPieChart
+                title="Browser Distribution"
+                description="Traffic by browser"
+                data={data?.browserBreakdown || []}
+                height={300}
+                dataKey="value"
+                nameKey="name"
+                showTrend={false}
+              />
+            </div>
+          </>
         )}
       </div>
 
@@ -551,79 +581,85 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       )}
-
-      {loading ? (
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-40" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-[300px] w-full" />
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Event Name</TableHead>
-                    <TableHead>Page</TableHead>
-                    <TableHead>Visitor ID</TableHead>
-                    <TableHead>Device</TableHead>
-                    <TableHead>Browser</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data?.recentEvents.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell>{format(new Date(event.timestamp), 'MMM dd, HH:mm:ss')}</TableCell>
-                      <TableCell>
-                        <Badge className="border-border shadow-in border border-dashed bg-transparent text-black">
-                          {event.eventName}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{event.pageUrl}</TableCell>
-                      <TableCell>{event.visitorsId ? event.visitorsId.slice(0, 8) : '-'}</TableCell>
-                      <TableCell>{event.device}</TableCell>
-                      <TableCell>{event.browser}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Events</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {tableLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </div>
-
-            {data && data.totalPages > 1 && (
-              <div className="mt-4 flex items-center justify-between">
-                <p className="text-muted-foreground text-sm">
-                  Page {currentPage} of {data.totalPages}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    onClick={() => setCurrentPage((p) => Math.min(data.totalPages, p + 1))}
-                    disabled={currentPage === data.totalPages}
-                    className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
-                  >
-                    Next
-                  </Button>
-                </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>Event Name</TableHead>
+                      <TableHead>Page</TableHead>
+                      <TableHead>Visitor ID</TableHead>
+                      <TableHead>Device</TableHead>
+                      <TableHead>Browser</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data?.recentEvents.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>
+                          {format(new Date(event.timestamp), 'MMM dd, HH:mm:ss')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="border-border shadow-in border border-dashed bg-transparent text-black">
+                            {event.eventName}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{event.pageUrl}</TableCell>
+                        <TableCell>
+                          {event.visitorsId ? event.visitorsId.slice(0, 8) : '-'}
+                        </TableCell>
+                        <TableCell>{event.device}</TableCell>
+                        <TableCell>{event.browser}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
+              {data && data.totalPages > 1 && (
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-muted-foreground text-sm">
+                    Page {currentPage} of {data.totalPages}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1 || tableLoading}
+                      size="sm"
+                      className="bg-secondary-light hover:bg-muted/50 shadow-s text-black disabled:opacity-50"
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      onClick={() => setCurrentPage((p) => Math.min(data.totalPages, p + 1))}
+                      disabled={currentPage === data.totalPages || tableLoading}
+                      size="sm"
+                      className="bg-secondary-light hover:bg-muted/50 shadow-s text-black disabled:opacity-50"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
