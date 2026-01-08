@@ -83,7 +83,6 @@ export default function CreateApiKeyDialog({
 
   const handleClose = () => {
     if (createdKey) {
-      // If key was created, only close after done
       return;
     }
     setName('');
@@ -91,7 +90,6 @@ export default function CreateApiKeyDialog({
     onOpenChange(false);
   };
 
-  // Success state - showing the created key
   if (createdKey) {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
@@ -107,7 +105,6 @@ export default function CreateApiKeyDialog({
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Warning Alert */}
             <Alert className="border-amber-200 bg-amber-50">
               <AlertCircle className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-800">
@@ -116,7 +113,6 @@ export default function CreateApiKeyDialog({
               </AlertDescription>
             </Alert>
 
-            {/* API Key Display */}
             <div className="space-y-2">
               <Label htmlFor="api-key">Your API Key</Label>
               <div className="flex gap-2">
@@ -147,7 +143,6 @@ export default function CreateApiKeyDialog({
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 onClick={handleDone}
@@ -162,7 +157,6 @@ export default function CreateApiKeyDialog({
     );
   }
 
-  // Creation form state
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
@@ -174,7 +168,6 @@ export default function CreateApiKeyDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name Input */}
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input
@@ -192,7 +185,6 @@ export default function CreateApiKeyDialog({
             </p>
           </div>
 
-          {/* Security Notice */}
           <Alert className="border-muted bg-muted/30">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -201,7 +193,6 @@ export default function CreateApiKeyDialog({
             </AlertDescription>
           </Alert>
 
-          {/* Actions */}
           <div className="flex justify-end gap-2 pt-4">
             <Button
               type="button"
