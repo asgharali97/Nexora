@@ -28,6 +28,7 @@ import {
   AlertDialogTitle
 } from '@/src/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import CreateApiKeyDialog from '@/src/components/CreateApiKeyDialog';
 
 interface ApiKey {
   id: string;
@@ -46,6 +47,8 @@ export default function ApiKeysPage() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  let orgId : string = '' 
 
   useEffect(() => {
     fetchApiKeys();
@@ -58,8 +61,8 @@ export default function ApiKeysPage() {
       const orgData = await orgResponse.json();
 
       if (!orgData?.id) return;
-
-      const response = await fetch(`/api/api-keys?orgId=${orgData.id}`);
+      orgId = orgData.id
+      const response = await fetch(`/api/api-keys?orgId=${orgId}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -173,11 +176,9 @@ export default function ApiKeysPage() {
             Manage API keys for tracking analytics on your websites
           </p>
         </div>
-        <Button asChild>
-          <Link href={`/${orgSlug}/settings/api-keys/new`}>
+        <Button onClick={() => setDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create New Key
-          </Link>
         </Button>
       </div>
 
@@ -281,6 +282,14 @@ export default function ApiKeysPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateApiKeyDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        orgId={orgId}
+        onSuccess={() => {
+        }}
+      />
     </>
   );
 }

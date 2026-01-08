@@ -48,7 +48,7 @@ export default function MembersList({
   }
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="w-full">
       <Table>
         <TableCaption>A list of members in your organization.</TableCaption>
         <TableHeader>
