@@ -74,7 +74,7 @@ const AnimatedButton = ({ title }: { title: string;}) => {
           animate="animate"
           transition="transition"
           whileHover="hover"
-          className="text-foreground shadow-s relative flex w-48 cursor-pointer gap-2 rounded-full border border-neutral-200 text-lg font-medium"
+          className="text-foreground shadow-in relative flex w-48 cursor-pointer gap-2 rounded-full border border-border text-lg font-medium"
         >
           <motion.span
             variants={childVaritent}

@@ -15,6 +15,7 @@ export default function ConditionalNavbar() {
       /^\/[^/]+\/settings/,
       /^\/[^/]+\/setup/,
       /^\/[^/]+\/events/,
+      /^\/[^/]+\/api/,
     ];
     
     return dashboardPatterns.some(pattern => pattern.test(pathname));

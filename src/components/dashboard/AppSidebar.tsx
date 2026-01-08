@@ -64,7 +64,7 @@ const navigation = [
       },
       {
         title: 'API Keys',
-        url: '/settings/api-keys',
+        url: '/api-keys',
         icon: KeyIcon
       },
       {
