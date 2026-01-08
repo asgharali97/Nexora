@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { signOut } from 'next-auth/react';
 import { Skeleton } from '@/src/components/ui/skeleton';
 import {toast} from 'sonner'
-
+import {Button} from '@/src/components/ui/button'
 const Navbar = () => {
   const { status } = useSession();
 
@@ -25,12 +25,19 @@ const Navbar = () => {
             </Link>
             {status === 'loading' && <Skeleton className="h-8 w-22 rounded-full" />}
             {status === 'authenticated' && (
-              <button
+              <>
+            <Link href="/dashboard">
+             <Button className="bg-secondary-light hover:bg-muted/50 shadow-in text-black rounded-full cursor-pointer">
+              Dashboard
+             </Button>
+             </Link>
+             <button
                 className="text-md bg-primary cursor-pointer rounded-4xl px-4 py-1 font-medium text-white"
                 onClick={handleLogOut}
               >
                 logout
               </button>
+              </>
             )}
             {status === 'unauthenticated' && (
               <div className="flex gap-4">

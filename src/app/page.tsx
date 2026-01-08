@@ -16,11 +16,6 @@ export default function Home() {
             <AnimatedButton title="Start now free" />
           </div>
         </div>
-        <div className="flex h-116 w-full items-center justify-center border border-neutral-300 bg-[var(--secondery-light)]">
-          <div className="rounded-xl border border-[var(--light)] bg-neutral-200 px-4 py-2 text-neutral-500">
-            Demo
-          </div>
-        </div>
         <div className="h-22"></div>
       </div>
     </>
