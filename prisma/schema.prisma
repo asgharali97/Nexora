@@ -1,13 +1,11 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
 }
-
 
 model User {
   id            String    @id @default(cuid())
@@ -15,15 +13,15 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
-  password      String? 
+  password      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  accounts     Account[]
-  sessions     Session[]
-  memberships  Membership[]
-  ownedOrgs    Organization[] @relation("OrgOwner")
+  accounts    Account[]
+  sessions    Session[]
+  memberships Membership[]
+  ownedOrgs   Organization[] @relation("OrgOwner")
 
   @@index([email])
   @@map("users")
@@ -70,7 +68,6 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-
 enum Role {
   OWNER
   ADMIN
@@ -114,15 +111,14 @@ model Membership {
   @@map("memberships")
 }
 
-
 model ApiKey {
-  id        String  @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  hashKey       String   @unique
+  hashKey   String    @unique
   orgId     String
   lastUsed  DateTime?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
 
   org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -138,32 +134,32 @@ enum Device {
 }
 
 model Event {
-  id         String   @id @default(cuid())
-  orgId      String
-  eventName  String
-  eventData  Json? @db.JsonB
+  id        String @id @default(cuid())
+  orgId     String
+  eventName String
+  eventData Json?  @db.JsonB
 
   visitorsId String?
   sessionId  String?
-  
-  pageUrl String?
-  pageTitle String?
-  referrer String?
 
-  browser String?
-  os String?
-  device Device @default(desktop)
+  pageUrl   String?
+  pageTitle String?
+  referrer  String?
+
+  browser   String?
+  os        String?
+  device    Device  @default(desktop)
   userAgent String?
 
   ipAddress String?
-  city String?
-  country String? 
+  city      String?
+  country   String?
 
-  receivedAt      DateTime @default(now())
+  receivedAt      DateTime  @default(now())
   clientTimestamp DateTime?
 
-  deleted    Boolean  @default(false)
-  deletedAt  DateTime?
+  deleted   Boolean   @default(false)
+  deletedAt DateTime?
 
   org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
@@ -175,8 +171,6 @@ model Event {
   @@index([sessionId])
   @@map("events")
 }
-
-
 
 enum WidgetType {
   LINE_CHART
