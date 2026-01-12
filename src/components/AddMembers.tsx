@@ -20,6 +20,7 @@ interface AddMemberFormProps {
   onSuccess?: () => void;
 }
 
+
 export default function AddMemberForm({ orgId, onSuccess }: AddMemberFormProps) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('MEMBER');
@@ -34,6 +35,8 @@ export default function AddMemberForm({ orgId, onSuccess }: AddMemberFormProps) 
     formData.append('email', email);
     formData.append('role', role);
 
+    if(!formData)
+    
     try {
       const result = await addMember(formData);
       

@@ -1,27 +1,26 @@
 'use client';
 import { IconArrowRight, IconChevronRight } from '@tabler/icons-react';
-import { motion } from 'motion/react';
-import { useState } from 'react';
+import { motion, Variants } from 'motion/react';
 import { cn } from '../lib/utils';
 
-const AnimatedButton = ({ title }: { title: string;}) => {
-  const buttonVaritent = {
+const AnimatedButton = ({ title }: { title: string }) => {
+  const buttonVaritent: Variants = {
     initial: {
       opacity: 0,
       filter: 'blur(10px)'
     },
     animate: {
       opacity: 1,
-      filter: 'blur(0px)'
-    },
-    transition: {
-      delay: 0.3,
-      ease: 'easeInOut'
-    },
-    hover: {}
+      filter: 'blur(0px)',
+
+      transition: {
+        delay: 0.3,
+        ease: 'easeInOut'
+      }
+    }
   };
 
-  const childVaritent = {
+  const childVaritent: Variants = {
     initial: { width: '3rem' },
     hover: {
       width: '100%',
@@ -31,7 +30,7 @@ const AnimatedButton = ({ title }: { title: string;}) => {
       }
     }
   };
-  const chevronVariants = {
+  const chevronVariants: Variants = {
     initial: { opacity: 1, filter: 'blur(5px)' },
     animate: {
       filter: 'blur(0px)'
@@ -42,7 +41,7 @@ const AnimatedButton = ({ title }: { title: string;}) => {
       transition: { duration: 0.1, ease: 'easeInOut' }
     }
   };
-  const arrowVariants = {
+  const arrowVariants: Variants = {
     initial: { opacity: 0, filter: 'blur(2px)' },
     hover: {
       opacity: 1,
@@ -51,10 +50,11 @@ const AnimatedButton = ({ title }: { title: string;}) => {
       transition: { duration: 0.2, delay: 0.3, ease: 'easeOut' }
     }
   };
+
   const ArrowVariants = motion(IconArrowRight);
   const ChevronVariants = motion(IconChevronRight);
 
-  const textVariant = {
+  const textVariant: Variants = {
     initial: { color: '#0f090b' },
     hover: {
       color: '#ffffff',
@@ -65,6 +65,7 @@ const AnimatedButton = ({ title }: { title: string;}) => {
       }
     }
   };
+
   return (
     <>
       <div>
@@ -72,9 +73,8 @@ const AnimatedButton = ({ title }: { title: string;}) => {
           variants={buttonVaritent}
           initial="initial"
           animate="animate"
-          transition="transition"
           whileHover="hover"
-          className="text-foreground shadow-in relative flex w-48 cursor-pointer gap-2 rounded-full border border-border text-lg font-medium"
+          className="text-foreground shadow-in border-border relative flex w-48 cursor-pointer gap-2 rounded-full border text-lg font-medium"
         >
           <motion.span
             variants={childVaritent}

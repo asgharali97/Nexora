@@ -12,12 +12,22 @@ import {
   TableRow
 } from '@/src/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+
+interface Member {
+  id: string;
+  role: Role;
+  user: {
+    name?: string;
+    email: string;
+  };
+}
+
 export default function MembersList({
   members,
   currentUserRole,
   orgId
 }: {
-  members: [];
+  members: Member[];
   currentUserRole: Role;
   orgId: string;
 }) {

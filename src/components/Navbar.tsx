@@ -27,16 +27,19 @@ const Navbar = () => {
             {status === 'authenticated' && (
               <>
             <Link href="/dashboard">
-             <Button className="bg-secondary-light hover:bg-muted/50 shadow-in text-black rounded-full cursor-pointer">
+             <Button 
+             size="sm"
+             className="bg-secondary-light hover:bg-muted/50 shadow-in text-black rounded-full cursor-pointer">
               Dashboard
              </Button>
              </Link>
-             <button
+             <Button
+                size="sm"
                 className="text-md bg-primary cursor-pointer rounded-4xl px-4 py-1 font-medium text-white"
                 onClick={handleLogOut}
               >
                 logout
-              </button>
+              </Button>
               </>
             )}
             {status === 'unauthenticated' && (
