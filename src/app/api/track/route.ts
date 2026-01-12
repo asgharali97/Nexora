@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/src/lib/prisma';
+import { Prisma } from '@/generated/prisma/client';
 import { hashApiKey } from '@/src/lib/crypto';
 import { TrackEventSchema } from '@/src/lib/validations/events.schema';
 import { broadcast } from '@/src/lib/realtimeEvent';
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
           }
         },
         eventName: data.eventName,
-        eventData: data.eventData,
+        eventData: data.eventData == null ? Prisma.DbNull : (data.eventData as Prisma.InputJsonValue),
         visitorsId: data.visitorsId || null,
         sessionId: data.sessionId || null,
         pageUrl: data.pageUrl || null,

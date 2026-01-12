@@ -71,6 +71,9 @@ export async function GET(req: NextRequest) {
           where: {
             orgId,
             visitorsId: { not: null }
+          },
+          orderBy: {
+            visitorsId: 'asc'
           }
         }),
 
@@ -82,6 +85,9 @@ export async function GET(req: NextRequest) {
             receivedAt: {
               gte: new Date(Date.now() - 30 * 60 * 1000)
             }
+          },
+          orderBy: {
+            sessionId: 'asc'
           }
         })
       ])

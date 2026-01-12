@@ -63,7 +63,7 @@ export async function PATCH(
       select: {
         id: true,
         name: true,
-        key: true,
+        hashKey: true,
         isActive: true,
         lastUsed: true,
         createdAt: true,
