@@ -222,19 +222,16 @@ export default function AnalyticsPage() {
         queryParams.append('pageUrl', filters.pageUrl);
       }
 
-      console.log('Exporting with params:', queryParams.toString());
 
       const response = await fetch(`/api/analytics/export?${queryParams.toString()}`);
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Export failed:', errorText);
-        alert('Export failed. Check console for details.');
         return;
       }
 
       const contentType = response.headers.get('content-type');
-      console.log('Response content-type:', contentType);
 
       if (!contentType || !contentType.includes('text/csv')) {
         const text = await response.text();
@@ -256,7 +253,6 @@ export default function AnalyticsPage() {
         document.body.removeChild(a);
       }, 100);
 
-      console.log('Export completed successfully');
     } catch (error) {
       console.error('Error exporting CSV:', error);
       alert('Export failed. Check console for details.');

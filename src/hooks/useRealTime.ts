@@ -54,7 +54,6 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions): UseRealtim
     onDisconnected,
     onError
   } = options;
-  console.log('[SSE Hook] Hook called with:', { orgId, enabled });
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [lastMessageAt, setLastMessageAt] = useState<Date | null>(null);
@@ -87,7 +86,6 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions): UseRealtim
     if (!orgId) {
       return;
     }
-    console.log('[SSE Hook] Creating EventSource connection...');
     const url = `/api/realtime/events?orgId=${encodeURIComponent(orgId)}`;
     let eventSource: EventSource;
 
@@ -141,7 +139,6 @@ export function useRealtimeEvents(options: UseRealtimeEventsOptions): UseRealtim
 
       eventSource.onerror = (error) => {
         console.error('[SSE Hook] Connection error:', error);
-        console.log('[SSE Hook] ReadyState on error:', eventSource.readyState);
 
         setIsConnected(false);
         setConnectionError('Connection lost. Reconnecting...');

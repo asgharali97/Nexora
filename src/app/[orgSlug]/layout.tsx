@@ -14,9 +14,10 @@ import { AppSidebar } from '@/src/components/dashboard/AppSidebar';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     orgSlug: string;
-  };
+  }>;
+  
 }
 
 export default async function DashboardLayout({

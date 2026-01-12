@@ -50,8 +50,6 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    console.log('Export whereClause:', JSON.stringify(whereClause, null, 2));
-
     const events = await prisma.event.findMany({
       where: whereClause,
       orderBy: { receivedAt: 'desc' },
@@ -70,7 +68,6 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log(`Exporting ${events.length} events`);
 
     const headers = [
       'ID',

@@ -37,7 +37,6 @@ export function addConnection(
 
   connections.get(orgId)!.add(connection);
 
-  console.log(`[SSE] Connection added: ${connectionId} for org: ${orgId}`);
   logConnectionStats();
 
   return connectionId;
@@ -50,14 +49,12 @@ export function removeConnection(orgId: string, connectionId: string): void {
   for (const conn of orgConnections) {
     if (conn.connectionId === connectionId) {
       orgConnections.delete(conn);
-      console.log(`[SSE] Connection removed: ${connectionId} from org: ${orgId}`);
       break;
     }
   }
 
   if (orgConnections.size === 0) {
     connections.delete(orgId);
-    console.log(`[SSE] No more connections for org: ${orgId}, removed from registry`);
   }
 
   logConnectionStats();
@@ -65,9 +62,6 @@ export function removeConnection(orgId: string, connectionId: string): void {
 
 export function broadcast(orgId: string, message: SSEMessage): void {
   const orgConnections = connections.get(orgId);
-
-  console.log('[SSE] Broadcast called for org:', orgId);
-  console.log('[SSE] Connections for this org:', orgConnections?.size || 0);
 
   if (!orgConnections || orgConnections.size === 0) {
     console.log(`[SSE] No connections found for org: ${orgId}`);
@@ -90,9 +84,6 @@ export function broadcast(orgId: string, message: SSEMessage): void {
     }
   });
 
-  console.log(
-    `[SSE] Broadcast complete: ${successCount} succeeded, ${failureCount} failed`
-  );
 }
 
 export function sendKeepAlivePing(): void {
@@ -138,7 +129,6 @@ export function cleanupStaleConnections(timeoutMs: number = 5 * 60 * 1000): void
     toRemove.forEach((conn) => {
       orgConnections.delete(conn);
       cleanedCount++;
-      console.log(`[SSE] Cleaned up stale connection: ${conn.connectionId}`);
     });
 
     if (orgConnections.size === 0) {
@@ -147,7 +137,6 @@ export function cleanupStaleConnections(timeoutMs: number = 5 * 60 * 1000): void
   });
 
   if (cleanedCount > 0) {
-    console.log(`[SSE] Cleanup complete: ${cleanedCount} stale connections removed`);
     logConnectionStats();
   }
 }
@@ -174,13 +163,9 @@ export function getConnectionStats(): {
 
 function logConnectionStats(): void {
   const stats = getConnectionStats();
-  console.log(
-    `[SSE] Active connections: ${stats.totalConnections} across ${stats.totalOrgs} organizations`
-  );
 }
 
 export function initializeRealtimeEvents(): void {
-  console.log('[SSE] Initializing real-time events module');
 
   setInterval(() => {
     sendKeepAlivePing();
@@ -190,11 +175,9 @@ export function initializeRealtimeEvents(): void {
     cleanupStaleConnections();
   }, 60 * 1000);
 
-  console.log('[SSE] Real-time events module initialized');
 }
 
 export function shutdownRealtimeEvents(): void {
-  console.log('[SSE] Shutting down real-time events module');
 
   const shutdownMessage: SSEMessage = {
     type: 'shutdown',
@@ -213,5 +196,4 @@ export function shutdownRealtimeEvents(): void {
 
   connections.clear();
 
-  console.log('[SSE] Real-time events module shutdown complete');
 }

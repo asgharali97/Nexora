@@ -9,7 +9,6 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   ensureRealtimeInitialized();
-  console.log('[SSE API] Request received');
 
   try {
     const session = await user();
@@ -94,11 +93,6 @@ export async function GET(req: NextRequest) {
       activeSessions: stats[2].length
     };
 
-    console.log('[SSE API] Initial data loaded:', {
-      events: recentEvents.length,
-      stats: initialStats
-    });
-
     const encoder = new TextEncoder();
     let isClosed = false;
     let connectionId: string | null = null;
@@ -131,7 +125,6 @@ export async function GET(req: NextRequest) {
         };
 
         connectionId = addConnection(orgId, sendRawMessage, encoder);
-        console.log('[SSE API] Connection registered:', connectionId);
 
         sendMessage('connected', {
           orgId,
@@ -145,13 +138,9 @@ export async function GET(req: NextRequest) {
           sendMessage('new_event', event);
         });
 
-        console.log('[SSE API] Initial data sent, connection ready');
-
         const cleanup = () => {
           if (isClosed) return;
           isClosed = true;
-
-          console.log('[SSE API] Cleaning up connection:', connectionId);
 
           if (connectionId) {
             removeConnection(orgId, connectionId);

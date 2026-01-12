@@ -11,7 +11,6 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const orgSlug = searchParams.get('orgId');
-    console.log('orgSlug, and Search Parmas ::', orgSlug, searchParams);
     if (!orgSlug) {
       return new Response('Missing orgId', { status: 400 });
     }

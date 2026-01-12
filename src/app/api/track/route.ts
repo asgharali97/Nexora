@@ -115,7 +115,6 @@ export async function POST(request: NextRequest) {
         clientTimestamp
       }
     });
-    console.log('calling boradcasting')
     broadcast(apiKey.org.id, {
       type: 'new_event',
       timestamp: new Date().toISOString(),
@@ -133,7 +132,6 @@ export async function POST(request: NextRequest) {
         clientTimestamp: event.clientTimestamp
       }
     });
-    console.log('called boradcast');  
 
     const updatedStats = await calculateOrgStats(apiKey.org.id);
     broadcast(apiKey.org.id, {
