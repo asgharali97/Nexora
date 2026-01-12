@@ -61,7 +61,7 @@ export default function MembersList({
     <div className="w-full">
       <Table>
         <TableCaption>A list of members in your organization.</TableCaption>
-        <TableHeader>
+      <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">Name</TableHead>
             <TableHead>Email</TableHead>

@@ -16,6 +16,7 @@ export const TrackEventSchema = z.object({
     .max(100, 'Event name too long'),
   
   eventData: z
+    // @ts-ignore
     .record(z.unknown())
     .optional()
     .nullable(),

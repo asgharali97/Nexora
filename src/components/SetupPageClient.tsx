@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { Code, Copy, Check, Key, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
@@ -43,24 +42,22 @@ export default function SetupPageClient({ apiKeys, orgSlug }: SetupPageClientPro
   }, [apiKeys]);
 
   const selectedKey = apiKeys.find((k) => k.id === selectedKeyId);
-
   const getInstallSnippet = () => {
     if (!selectedKey) return '';
-    return `<!-- Nexora Analytics -->
+    return `
 <script src="https://yourdomain.com/nexora.js"></script>
 <script>
-  nexora.init('${selectedKey.key}');
+  nexora.init('${selectedKey.hashKey}');
 </script>`;
   };
 
   const getCustomEventSnippet = () => {
-    return `// Track a custom event
+    return `
 nexora.track('button_clicked', {
   button_name: 'Sign Up',
   page: 'Homepage'
 });
 
-// Track form submission
 nexora.track('form_submitted', {
   form_name: 'Contact Form',
   success: true
@@ -202,7 +199,7 @@ nexora.track('form_submitted', {
                 <span className="text-slate-50">.</span>
                 <span className="text-yellow-300">init</span>
                 <span className="text-slate-50">(</span>
-                <span className="text-emerald-300">'{selectedKey?.key}'</span>
+                <span className="text-emerald-300">'{selectedKey?.hashKey}'</span>
                 <span className="text-slate-50">);</span>
                 {'\n'}
                 <span className="text-pink-400">&lt;/script&gt;</span>
@@ -287,7 +284,7 @@ nexora.track('form_submitted', {
                     <span className="text-slate-50">.</span>
                     <span className="text-yellow-300">init</span>
                     <span className="text-slate-50">(</span>
-                    <span className="text-emerald-300">'{selectedKey?.key}'</span>
+                    <span className="text-emerald-300">'{selectedKey?.hashKey}'</span>
                     <span className="text-slate-50">)</span>
                     <span className="text-pink-400">&lt;/script&gt;</span>
                     {'\n'}
@@ -356,7 +353,7 @@ nexora.track('form_submitted', {
                     <span className="text-slate-50">.</span>
                     <span className="text-yellow-300">init</span>
                     <span className="text-slate-50">(</span>
-                    <span className="text-emerald-300">'{selectedKey?.key}'</span>
+                    <span className="text-emerald-300">'{selectedKey?.hashKey}'</span>
                     <span className="text-slate-50">);</span>
                     {'\n'}
                     {'        '}

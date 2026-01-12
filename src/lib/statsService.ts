@@ -10,6 +10,9 @@ export async function calculateOrgStats(orgId: string) {
         orgId,
         visitorsId: { not: null }
       },
+      orderBy:{
+        visitorsId:"asc"
+      }
     }),
     
     prisma.event.groupBy({
@@ -21,6 +24,9 @@ export async function calculateOrgStats(orgId: string) {
           gte: new Date(Date.now() - 30 * 60 * 1000)
         }
       },
+      orderBy:{
+        sessionId:"asc"
+      }
     }),
   ]);
 
