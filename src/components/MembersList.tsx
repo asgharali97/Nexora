@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow
 } from '@/src/components/ui/table';
+import {Button } from '@/src/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface Member {
@@ -100,7 +101,7 @@ export default function MembersList({
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="rounded bg-muted-foreground/10 px-3 py-1 text-foreground/80 font-medium shadow-s">{member.role}</span>
+                      <span className="rounded bg-muted/10 px-3 py-1 text-foreground/80 font-medium shadow-in hover:bg-muted/50 cursor-pointer">{member.role}</span>
                     )}
                   </div>
                 </TableCell>
