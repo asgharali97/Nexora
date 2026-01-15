@@ -27,6 +27,7 @@ import {
   TableBody,
   TableCell
 } from '@/src/components/ui/table';
+import { toast } from 'sonner';
 
 interface AnalyticsFilters {
   dateRange: string;
@@ -210,7 +211,7 @@ export default function AnalyticsPage() {
       const queryParams = new URLSearchParams({
         startDate: dateRange.start.toISOString(),
         endDate: dateRange.end.toISOString()
-      });      
+      });
 
       if (filters.eventType !== 'all') {
         queryParams.append('eventType', filters.eventType);
@@ -221,7 +222,6 @@ export default function AnalyticsPage() {
       if (filters.pageUrl) {
         queryParams.append('pageUrl', filters.pageUrl);
       }
-
 
       const response = await fetch(`/api/analytics/export?${queryParams.toString()}`);
 
@@ -236,7 +236,7 @@ export default function AnalyticsPage() {
       if (!contentType || !contentType.includes('text/csv')) {
         const text = await response.text();
         console.error('Expected CSV but got:', text.substring(0, 200));
-        alert('Export failed: Invalid response format');
+        toast('Export failed: Invalid response format');
         return;
       }
 
@@ -252,10 +252,9 @@ export default function AnalyticsPage() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       }, 100);
-
     } catch (error) {
       console.error('Error exporting CSV:', error);
-      alert('Export failed. Check console for details.');
+      toast('Export failed. Check console for details.');
     }
   };
 

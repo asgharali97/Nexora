@@ -21,3 +21,10 @@ export default function Home() {
     </>
   );
 }
+
+export const metadata = {
+  title: "Nexora  Real-Time Event Analytics for Your App",
+  description:
+    "Nexora is a real-time event analytics dashboard that helps developers track, visualize, and understand application events as they happen.",
+};
+

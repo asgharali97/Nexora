@@ -1,6 +1,15 @@
 import { prisma } from '@/src/lib/prisma';
 import { redirect } from 'next/navigation';
 import { user } from '@/src/lib/user';
+import type { Metadata } from "next";
+
+export const metadata:Metadata = {
+  title: "Dashboard",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function dashboardRedirect() {
   const session = await user();
@@ -16,5 +25,6 @@ export default async function dashboardRedirect() {
   }
 
   redirect(`/${membership.org.slug}/dashboard`);
-  
 }
+
+

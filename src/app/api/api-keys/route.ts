@@ -84,8 +84,16 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const orgId = searchParams.get('orgId');
+    const orgSlug = searchParams.get('orgId');
 
+    if (!orgSlug) {
+      return new Response('Missing orgId', { status: 400 });
+    }
+    const org = await prisma.membership.findFirst({
+      where: { userId: session?.user.id },
+      include: { org: true }
+    });
+    const orgId = org?.orgId;
     if (!orgId) {
       return NextResponse.json({ error: 'orgId is required' }, { status: 400 });
     }
@@ -124,11 +132,10 @@ export async function GET(req: NextRequest) {
     const maskedKeys = apiKeys.map((key) => ({
       ...key,
       key: `${key.hashKey.substring(0, 12)}...${key.hashKey.substring(key.hashKey.length - 4)}`,
-      keyHash: undefined,
+      keyHash: undefined
     }));
 
     return NextResponse.json(maskedKeys);
-
   } catch (error) {
     console.error('Error fetching API keys:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

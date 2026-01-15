@@ -8,6 +8,14 @@ import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { userInput, userSchema } from '@/src/lib/validations/user.schema';
+import type { Metadata } from "next";
+
+
+export const metadata: Metadata = {
+  title: "Sign Up",
+  description: "Create new Nexora account.",
+};
+
 const Page = () => {
   const {
     handleSubmit,
@@ -152,3 +160,5 @@ const Page = () => {
 };
 
 export default Page;
+
+

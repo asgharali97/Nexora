@@ -11,6 +11,16 @@ import {
   BreadcrumbSeparator,
 } from '@/src/components/ui/breadcrumb';
 import { AppSidebar } from '@/src/components/dashboard/AppSidebar';
+import type { Metadata } from "next";
+
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -79,3 +89,4 @@ export default async function DashboardLayout({
     </SidebarProvider>
   );
 }
+

@@ -7,13 +7,13 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/src/components/ui/dialog';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Alert, AlertDescription } from '@/src/components/ui/alert';
-
+import { toast } from 'sonner';
 interface CreateApiKeyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,7 +25,7 @@ export default function CreateApiKeyDialog({
   open,
   onOpenChange,
   orgId,
-  onSuccess,
+  onSuccess
 }: CreateApiKeyDialogProps) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,8 +47,8 @@ export default function CreateApiKeyDialog({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          orgId: orgId,
-        }),
+          orgId: orgId
+        })
       });
 
       const data = await response.json();
@@ -56,11 +56,11 @@ export default function CreateApiKeyDialog({
       if (response.ok) {
         setCreatedKey(data.key);
       } else {
-        alert(`Error: ${data.error}`);
+        toast(`Error: ${data.error}`);
       }
     } catch (error) {
       console.error('Error creating API key:', error);
-      alert('Failed to create API key');
+      toast('Failed to create API key');
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,10 @@ export default function CreateApiKeyDialog({
   if (createdKey) {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-[550px]" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogContent
+          className="sm:max-w-[550px]"
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <Check className="h-6 w-6 text-green-600" />
@@ -116,18 +119,8 @@ export default function CreateApiKeyDialog({
             <div className="space-y-2">
               <Label htmlFor="api-key">Your API Key</Label>
               <div className="flex gap-2">
-                <Input
-                  id="api-key"
-                  value={createdKey}
-                  readOnly
-                  className="font-mono text-sm"
-                />
-                <Button
-                  onClick={handleCopy}
-                  variant="outline"
-                  className="shrink-0"
-                  size="sm"
-                >
+                <Input id="api-key" value={createdKey} readOnly className="font-mono text-sm" />
+                <Button onClick={handleCopy} variant="outline" className="shrink-0" size="sm">
                   {copied ? (
                     <>
                       <Check className="mr-2 h-4 w-4" />

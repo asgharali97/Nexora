@@ -100,7 +100,7 @@ export default function MembersList({
                           <SelectItem value="ADMIN">Admin</SelectItem>
                         </SelectContent>
                       </Select>
-                    ) : (
+                    ) : ( 
                       <span className="rounded bg-muted/10 px-3 py-1 text-foreground/80 font-medium shadow-in hover:bg-muted/50 cursor-pointer">{member.role}</span>
                     )}
                   </div>
