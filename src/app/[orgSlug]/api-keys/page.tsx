@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { Copy, Trash2, Plus, Key } from 'lucide-react';
 
 import { Button } from '@/src/components/ui/button';
@@ -48,12 +47,11 @@ export default function ApiKeysPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState<{ id: string; name: string } | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  let orgId : string = '' 
-
+  const [orgId, setOrgId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApiKeys();
-  }, []);
+  }, [orgSlug]);
 
   const fetchApiKeys = async () => {
     try {
@@ -62,7 +60,7 @@ export default function ApiKeysPage() {
       const orgData = await orgResponse.json();
 
       if (!orgData?.id) return;
-      orgId = orgData.id
+      setOrgId(orgData.id);
       const response = await fetch(`/api/api-keys?orgId=${orgId}`);
       const data = await response.json();
 
@@ -177,9 +175,9 @@ export default function ApiKeysPage() {
             Manage API keys for tracking analytics on your websites
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create New Key
+        <Button onClick={() => setDialogOpen(true)} disabled={!orgId}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create New Key
         </Button>
       </div>
 
@@ -191,11 +189,9 @@ export default function ApiKeysPage() {
             <p className="text-muted-foreground mt-2 text-sm">
               Get started by creating a new API key
             </p>
-            <Button asChild className="mt-6">
-              <Link href={`/${orgSlug}/settings/api-keys/new`}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create API Key
-              </Link>
+            <Button onClick={() => setDialogOpen(true)} disabled={!orgId}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create New Key
             </Button>
           </CardContent>
         </Card>
@@ -287,9 +283,8 @@ export default function ApiKeysPage() {
       <CreateApiKeyDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        orgId={orgId}
-        onSuccess={() => {
-        }}
+        orgId={orgId ?? ''}
+        onSuccess={() => {}}
       />
     </>
   );

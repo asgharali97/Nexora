@@ -55,6 +55,7 @@ export default function CreateApiKeyDialog({
 
       if (response.ok) {
         setCreatedKey(data.key);
+        toast('API key created successfully');
       } else {
         toast(`Error: ${data.error}`);
       }
