@@ -284,7 +284,19 @@ export default function ApiKeysPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         orgId={orgId ?? ''}
-        onSuccess={() => {}}
+        onSuccess={(newKey) => {
+          setApiKeys((prev) => [
+            {
+              id: newKey.id,
+              name: newKey.name,
+              key: newKey.key,
+              isActive: newKey.isActive,
+              lastUsed: newKey.lastUsed ? new Date(newKey.lastUsed) : null,
+              createdAt: new Date(newKey.createdAt)
+            },
+            ...prev
+          ]);
+        }}
       />
     </>
   );

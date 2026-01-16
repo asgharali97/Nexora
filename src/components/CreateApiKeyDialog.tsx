@@ -14,11 +14,19 @@ import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { Alert, AlertDescription } from '@/src/components/ui/alert';
 import { toast } from 'sonner';
+
 interface CreateApiKeyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orgId: string;
-  onSuccess?: () => void;
+  onSuccess?: (newKey: {
+    id: string;
+    name: string;
+    key: string;
+    isActive: boolean;
+    lastUsed: string | null;
+    createdAt: string;
+  }) => void;
 }
 
 export default function CreateApiKeyDialog({
@@ -56,6 +64,7 @@ export default function CreateApiKeyDialog({
       if (response.ok) {
         setCreatedKey(data.key);
         toast('API key created successfully');
+        onSuccess?.(data);
       } else {
         toast(`Error: ${data.error}`);
       }
@@ -79,7 +88,6 @@ export default function CreateApiKeyDialog({
     setCreatedKey(null);
     setName('');
     onOpenChange(false);
-    onSuccess?.();
   };
 
   const handleClose = () => {
