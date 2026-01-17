@@ -11,7 +11,7 @@ export const createOrgSchema = z.object({
 export const addMemberSchema = z.object({
   email: z.email(),
   orgId: z.string(),
-  role: z.enum(["MEMBER", "ADMIN","ANALYST"]).default("MEMBER"),
+  role: z.enum(["MEMBER", "ADMIN","ANALYST"]),
 })
 
 export type addMemberInput = z.infer<typeof addMemberSchema>;
