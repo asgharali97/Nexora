@@ -35,10 +35,14 @@ export default function AddMemberForm({ orgId, onSuccess }: AddMemberFormProps) 
     defaultValues: {
       email: '',
       role: 'MEMBER',
+      orgId
     },
   });
 
+  console.log('orgId', orgId);
   const onSubmit = async (data: addMemberInput) => {
+    console.log('orgId', orgId);
+    console.log(data);
     try {
       const result = await addMember({ ...data, orgId });
       if (result.error) {
@@ -52,9 +56,9 @@ export default function AddMemberForm({ orgId, onSuccess }: AddMemberFormProps) 
       toast.error('Failed to add member');
     }
   };
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <input type="hidden" {...register('orgId')} />
       <div className="space-y-2">
         <Label htmlFor="email">Email Address</Label>
         <Input
@@ -113,7 +117,7 @@ export default function AddMemberForm({ orgId, onSuccess }: AddMemberFormProps) 
       <div className="flex justify-end gap-2 pt-4">
         <Button
           type="submit"
-          disabled={isSubmitting || !watch('email')}
+          disabled={isSubmitting}
           className="bg-secondary-light hover:bg-muted/50 shadow-s text-black"
         >
           {isSubmitting ? (
